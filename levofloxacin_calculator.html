@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Levofloxacin Adult Dosing & Renal Adjustment Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #0b4f6c;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1250px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.05fr) minmax(260px, 1.05fr) minmax(260px, 1.25fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #0b4f6c;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 52px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #0b4f6c;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #0b4f6c;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1250px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Levofloxacin Adult Dosing & Renal Adjustment Calculator</h1>
+  <p>Based on adult FDA labeling and CAP guidelines. For educational use.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- PATIENT & RENAL -->
+    <section class="card">
+      <h2>Patient data & renal function</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="18" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="120" max="220" step="0.5">
+        </div>
+        <div class="field">
+          <label>Actual body weight (kg)</label>
+          <input type="number" id="tbw" min="30" max="250" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Serum creatinine (mg/dL)</label>
+          <input type="number" id="scr" min="0.2" max="10" step="0.01">
+        </div>
+        <div class="field">
+          <label>Estimated CrCl (Cockcroft–Gault, mL/min)</label>
+          <input type="text" id="crcl" readonly>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>IBW (kg)</label>
+          <input type="text" id="ibw" readonly>
+        </div>
+        <div class="field">
+          <label>Dosing weight for CrCl (kg)</label>
+          <input type="text" id="dw" readonly>
+          <div class="hint">IBW / AdjBW if TBW &gt;120% IBW, otherwise TBW.</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">Risk factors / cautions</h2>
+      <div class="field">
+        <label>Pregnancy</label>
+        <select id="pregnancy">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Significant QT-risk or tendinopathy history (QTc, aneurysm, steroids + age &gt;60, transplant)?</label>
+        <select id="qtrisk">
+          <option value="No">No major risk</option>
+          <option value="Yes">Yes – high risk / caution</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Other notes (CNS disease, MG, prior FQ toxicity, etc.)</label>
+        <textarea id="notes"></textarea>
+      </div>
+    </section>
+
+    <!-- INDICATION & BASE REGIMEN -->
+    <section class="card">
+      <h2>Indication & base regimen (normal renal function)</h2>
+
+      <div class="field">
+        <label>Route</label>
+        <select id="route">
+          <option value="PO">Oral (PO)</option>
+          <option value="IV">IV</option>
+        </select>
+        <div class="hint">Oral and IV are interchangeable (F ≈ 99%); same dose for both routes.</div>
+      </div>
+
+      <div class="field">
+        <label>Indication</label>
+        <select id="indication">
+          <option value="HAP">Nosocomial pneumonia (HAP/VAP)</option>
+          <option value="CAP_750">Community-acquired pneumonia – 750 mg × 5 days</option>
+          <option value="CAP_500">Community-acquired pneumonia – 500 mg × 7–14 days</option>
+          <option value="SINUSITIS">Acute bacterial sinusitis</option>
+          <option value="BRONCHITIS">Acute exacerbation of chronic bronchitis</option>
+          <option value="CUTI_750">Complicated UTI / acute pyelonephritis – 750 mg × 5 days</option>
+          <option value="CUTI_250">Complicated UTI / acute pyelonephritis – 250 mg × 10 days</option>
+          <option value="UUTI">Uncomplicated cystitis (simple UTI)</option>
+          <option value="PROSTATITIS">Chronic bacterial prostatitis</option>
+          <option value="CSSSI">Complicated skin & skin structure infection</option>
+          <option value="USSSI">Uncomplicated skin & skin structure infection</option>
+          <option value="OTHER">Other / custom (enter base dose manually)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Base daily dose (mg) – CrCl ≥50 mL/min</label>
+          <input type="number" id="baseDoseMg" min="250" max="1000" step="50">
+          <div class="hint">Standard: 250, 500 or 750 mg once daily depending on indication.</div>
+        </div>
+        <div class="field">
+          <label>Base interval (hours)</label>
+          <input type="number" id="baseIntervalH" min="12" max="48" step="1" value="24">
+          <div class="hint">Label regimens are q24h for most adult indications.</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Typical duration – minimum (days)</label>
+          <input type="number" id="durMin" min="1" max="60" step="1">
+        </div>
+        <div class="field">
+          <label>Typical duration – maximum (days)</label>
+          <input type="number" id="durMax" min="1" max="60" step="1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Alternative labeled regimens (informational)</label>
+        <textarea id="altRegimens" readonly></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <small>
+        Regimen defaults are taken from adult FDA label (Levaquin / levofloxacin) and Drugs.com tables for each indication.
+        Use local CAP/HAP/UTI guidelines to refine choice and duration.
+      </small>
+    </section>
+
+    <!-- OUTPUT & PK -->
+    <section class="card">
+      <h2>Dose, renal adjustment & safety flags</h2>
+
+      <div class="output-row">
+        <span class="output-label">CrCl category</span>
+        <span class="output-value" id="crclBandOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Base regimen (CrCl ≥50 mL/min)</span>
+        <span class="output-value" id="baseRegimenOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Renal-adjusted regimen</span>
+        <span class="output-value" id="renalRegimenOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Dialysis note</span>
+        <span class="output-value" id="dialysisOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Global safety flag (QT / boxed warnings)</span>
+        <span class="output-value" id="safetyOut">–</span>
+      </div>
+      <div id="safetyPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2 style="margin-top:0.4rem;">PK estimates (population model)</h2>
+      <small>
+        Uses Vd ≈ 1.1 L/kg, F ≈ 99%, t½ ≈ 6–8 h at normal renal function. PK here is approximate and not a substitute for TDM.
+      </small>
+
+      <div class="output-row">
+        <span class="output-label">Vd</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">CL (estimated)</span>
+        <span class="output-value" id="clOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke</span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">t½</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted Cmax (end of “IV” infusion)</span>
+        <span class="output-value" id="cmaxOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted Cmin (end of interval)</span>
+        <span class="output-value" id="cminOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Summary</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data and select indication, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Levofloxacin adult dosing in this calculator is based primarily on FDA-approved labeling (Levaquin / levofloxacin tablets and injection) and independent
+  dosing summaries. Renal dose adjustments follow creatinine clearance bands (≥50, 20–49, 10–19 mL/min, HD/CAPD) as in the label
+  tables. Oral bioavailability is ~99%, so IV and PO doses are interchangeable. Fluoroquinolones carry boxed warnings (tendon rupture, neuropathy, CNS
+  effects, dysglycemia, QT prolongation, aortic aneurysm/dissection); use only when benefits outweigh risks and in line with local stewardship.
+</footer>
+
+<script>
+  // ---------- Utilities ----------
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // ---------- IBW / AdjBW / CrCl ----------
+  function updateWeightsAndCrCl() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") ibw = 50 + 2.3 * over5ft;
+      else ibw = 45.5 + 2.3 * over5ft;
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else if (tbw < ibw) {
+        dw = tbw;
+      } else {
+        dw = ibw;
+      }
+    } else if (tbw) {
+      dw = tbw;
+    }
+
+    if (age && sex && scr && dw) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw,1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw,1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl,0) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateWeightsAndCrCl);
+  });
+
+  // ---------- Base regimens by indication ----------
+  function setDefaultsFromIndication() {
+    const ind = document.getElementById("indication").value;
+    let baseDose = 500;
+    let intervalH = 24;
+    let durMin = 5;
+    let durMax = 10;
+    let alt = "";
+
+    switch (ind) {
+      case "HAP":
+        baseDose = 750;
+        durMin = 7; durMax = 14;
+        alt = "Nosocomial pneumonia: 750 mg PO/IV q24h for 7–14 days. Consider combination with antipseudomonal β-lactam if Pseudomonas risk.";
+        break;
+      case "CAP_750":
+        baseDose = 750;
+        durMin = 5; durMax = 5;
+        alt = "CAP options: 750 mg q24h for 5 days (preferred short course), OR 500 mg q24h for 7–14 days.";
+        break;
+      case "CAP_500":
+        baseDose = 500;
+        durMin = 7; durMax = 14;
+        alt = "CAP options: 500 mg q24h for 7–14 days, OR 750 mg q24h for 5 days.";
+        break;
+      case "SINUSITIS":
+        baseDose = 500;
+        durMin = 10; durMax = 14;
+        alt = "Acute bacterial sinusitis: 500 mg q24h for 10–14 days OR 750 mg q24h for 5 days (use fluoroquinolones only if no alternatives).";
+        break;
+      case "BRONCHITIS":
+        baseDose = 500;
+        durMin = 7; durMax = 7;
+        alt = "Acute bacterial exacerbation of chronic bronchitis: typical 500 mg q24h for 7 days.";
+        break;
+      case "CUTI_750":
+        baseDose = 750;
+        durMin = 5; durMax = 5;
+        alt = "Complicated UTI/acute pyelonephritis: 750 mg q24h for 5 days (short high-dose regimen) OR 250 mg q24h for 10 days.";
+        break;
+      case "CUTI_250":
+        baseDose = 250;
+        durMin = 10; durMax = 10;
+        alt = "Complicated UTI/acute pyelonephritis: 250 mg q24h for 10 days OR 750 mg q24h for 5 days.";
+        break;
+      case "UUTI":
+        baseDose = 250;
+        durMin = 3; durMax = 3;
+        alt = "Uncomplicated cystitis: 250 mg q24h for 3 days (reserve FQ if no alternatives).";
+        break;
+      case "PROSTATITIS":
+        baseDose = 500;
+        durMin = 28; durMax = 28;
+        alt = "Chronic bacterial prostatitis: 500 mg q24h for 28 days.";
+        break;
+      case "CSSSI":
+        baseDose = 750;
+        durMin = 7; durMax = 14;
+        alt = "Complicated skin/skin structure infections: 750 mg q24h for 7–14 days.";
+        break;
+      case "USSSI":
+        baseDose = 500;
+        durMin = 7; durMax = 10;
+        alt = "Uncomplicated skin/skin structure infections: 500 mg q24h for 7–10 days.";
+        break;
+      case "OTHER":
+        baseDose = 500;
+        durMin = 5; durMax = 14;
+        alt = "Custom indication – edit base dose, interval, and duration according to selected guideline.";
+        break;
+    }
+
+    document.getElementById("baseDoseMg").value = baseDose;
+    document.getElementById("baseIntervalH").value = intervalH;
+    document.getElementById("durMin").value = durMin;
+    document.getElementById("durMax").value = durMax;
+    document.getElementById("altRegimens").value = alt;
+  }
+
+  document.getElementById("indication").addEventListener("change", setDefaultsFromIndication);
+  setDefaultsFromIndication();
+
+  // ---------- Renal adjustment logic (label-based) ----------
+  function adjustForRenal(baseDose, baseInterval, crcl, indication) {
+    if (!baseDose || baseInterval !== 24 || !crcl) {
+      return {
+        crclBand: "Unknown / non-standard",
+        regimenText: "Base regimen only (no renal logic applied).",
+        dialysisText: "n/a"
+      };
+    }
+
+    let band = "";
+    let regimen = "";
+    let dialysisNote = "";
+
+    // Decide if uncomplicated UTI (special rule for 250 mg)
+    const isUncompUTI = (indication === "UUTI");
+
+    if (crcl >= 50) {
+      band = "CrCl ≥50 mL/min (no adjustment)";
+      regimen = `${baseDose} mg q24h (no renal adjustment)`;
+    } else if (crcl >= 20) {
+      band = "CrCl 20–49 mL/min";
+      if (baseDose === 750) {
+        regimen = "750 mg q48h";
+      } else if (baseDose === 500) {
+        regimen = "500 mg once, then 250 mg q24h";
+      } else if (baseDose === 250) {
+        regimen = "250 mg q24h (no adjustment recommended for 250-mg q24h regimen).";
+      } else {
+        regimen = `Non-standard dose ${baseDose} mg: follow product renal table or local protocol.`;
+      }
+    } else if (crcl >= 10) {
+      band = "CrCl 10–19 mL/min";
+      if (baseDose === 750) {
+        regimen = "750 mg once, then 500 mg q48h";
+      } else if (baseDose === 500) {
+        regimen = "500 mg once, then 250 mg q48h";
+      } else if (baseDose === 250) {
+        if (isUncompUTI) {
+          regimen = "250 mg q24h (no adjustment recommended in uncomplicated UTI).";
+        } else {
+          regimen = "250 mg q48h";
+        }
+      } else {
+        regimen = `Non-standard dose ${baseDose} mg: follow product renal table or local protocol.`;
+      }
+    } else {
+      band = "CrCl &lt;10 mL/min or dialysis";
+      if (baseDose === 750) {
+        regimen = "750 mg once, then 500 mg q48h (HD/CAPD).";
+      } else if (baseDose === 500) {
+        regimen = "500 mg once, then 250 mg q48h (HD/CAPD).";
+      } else if (baseDose === 250) {
+        regimen = "250 mg q48h (data limited; consider alternatives).";
+      } else {
+        regimen = `Non-standard dose ${baseDose} mg: consult specialist and detailed dosing tables.`;
+      }
+      dialysisNote = "For HD/CAPD, same as CrCl 10–19 mL/min in the product table; give doses after dialysis.";
+    }
+
+    return {
+      crclBand: band,
+      regimenText: regimen,
+      dialysisText: dialysisNote || "If on HD/CAPD, follow institutional schedule (often as for CrCl 10–19 mL/min)."
+    };
+  }
+
+  // ---------- PK model ----------
+  function computePK(doseMg, intervalH, crcl, tbw) {
+    if (!doseMg || !intervalH || !tbw) {
+      return {
+        vd: null, cl: null, ke: null, tHalf: null, cmax: null, cmin: null
+      };
+    }
+
+    // Volume of distribution: ~1.1 L/kg
+    const vd = 1.1 * tbw; // L
+
+    // Clearance: approximate renal-driven CL; convert CrCl to L/h and add small nonrenal term
+    let cl = null;
+    if (crcl && crcl > 0) {
+      const crclEff = Math.min(Math.max(crcl, 5), 130); // clamp
+      // CrCl (mL/min) → L/h = CrCl * 0.06; add ~1 L/h non-renal
+      cl = crclEff * 0.06 + 1.0; // L/h
+    }
+
+    let ke = null, tHalf = null;
+    if (cl && vd) {
+      ke = cl / vd;               // h^-1
+      tHalf = 0.693 / ke;         // h
+    }
+
+    // Treat as short IV infusion with infusion time 1 h (approximate, also for PO since F~99%)
+    let cmax = null, cmin = null;
+    const infusionH = 1.0;
+    if (ke && vd && doseMg && intervalH) {
+      const R = doseMg / infusionH;                      // mg/h
+      cmax = (R / (ke * vd)) * (1 - Math.exp(-ke * infusionH)); // mg/L
+      const delta = intervalH - infusionH;
+      if (delta > 0) {
+        cmin = cmax * Math.exp(-ke * delta);
+      }
+    }
+
+    return { vd, cl, ke, tHalf, cmax, cmin };
+  }
+
+  // ---------- Main compute ----------
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+
+    const pregnancy = document.getElementById("pregnancy").value;
+    const qtrisk = document.getElementById("qtrisk").value;
+    const notes = document.getElementById("notes").value || "None";
+
+    const route = document.getElementById("route").value;
+    const indication = document.getElementById("indication").value;
+    let baseDose = parseFloat(document.getElementById("baseDoseMg").value);
+    let baseInterval = parseFloat(document.getElementById("baseIntervalH").value);
+    const durMin = parseFloat(document.getElementById("durMin").value);
+    const durMax = parseFloat(document.getElementById("durMax").value);
+
+    if (!age || !sex || !hCm || !tbw || !scr || !dw || !crcl) {
+      alert("Please complete age, sex, height, weight, and serum creatinine so that IBW, dosing weight, and CrCl can be calculated.");
+    }
+
+    if (!baseDose || baseDose <= 0) {
+      alert("Base dose is not valid – please check indication and base dose fields.");
+      return;
+    }
+
+    // Build base regimen text
+    let baseRegimenText = `${baseDose} mg ${route} q${baseInterval}h`;
+    if (!isNaN(durMin) && !isNaN(durMax)) {
+      if (durMin === durMax) {
+        baseRegimenText += ` for ${durMin} day(s)`;
+      } else {
+        baseRegimenText += ` for ${durMin}–${durMax} days`;
+      }
+    }
+
+    // Renal adjustment
+    const renalInfo = adjustForRenal(baseDose, baseInterval, crcl, indication);
+
+    // Safety flag for QT / boxed warnings
+    let safetyMsg = "Fluoroquinolone; apply boxed-warning precautions, especially in high-risk patients.";
+    let safetyClass = "pill-warn";
+    if (pregnancy === "Yes") {
+      safetyMsg = "Avoid levofloxacin in pregnancy if alternatives exist (fluoroquinolones generally not first-line).";
+      safetyClass = "pill-alert";
+    }
+    if (qtrisk === "Yes") {
+      safetyMsg = "High QT / tendon / aneurysm risk – consider alternative antibiotic and correct reversible risk factors.";
+      safetyClass = "pill-alert";
+    }
+
+    const safetyPill = document.getElementById("safetyPill");
+    safetyPill.style.display = "inline-block";
+    safetyPill.textContent = (safetyClass === "pill-alert") ? "High-risk use" : "Use with caution";
+    safetyPill.className = "pill " + safetyClass;
+
+    // PK
+    const pk = computePK(baseDose, baseInterval, crcl, tbw);
+
+    document.getElementById("crclBandOut").textContent = renalInfo.crclBand;
+    document.getElementById("baseRegimenOut").textContent = baseRegimenText;
+    document.getElementById("renalRegimenOut").textContent = renalInfo.regimenText;
+    document.getElementById("dialysisOut").textContent = renalInfo.dialysisText;
+    document.getElementById("safetyOut").textContent = safetyMsg;
+
+    document.getElementById("vdOut").textContent =
+      pk.vd ? `${fmt(pk.vd,1)} L (${fmt(pk.vd / tbw,2)} L/kg)` : "–";
+    document.getElementById("clOut").textContent =
+      pk.cl ? `${fmt(pk.cl,2)} L/h` : "–";
+    document.getElementById("keOut").textContent =
+      pk.ke ? `${fmt(pk.ke,3)} h⁻¹` : "–";
+    document.getElementById("tHalfOut").textContent =
+      pk.tHalf ? `${fmt(pk.tHalf,1)} h` : "–";
+    document.getElementById("cmaxOut").textContent =
+      pk.cmax ? `${fmt(pk.cmax,1)} mg/L (approx.)` : "–";
+    document.getElementById("cminOut").textContent =
+      pk.cmin ? `${fmt(pk.cmin,2)} mg/L (approx.)` : "–";
+
+    // Summary
+    const summary = [];
+    summary.push("Indication & route:");
+    const indText = document.getElementById("indication").options[document.getElementById("indication").selectedIndex].text;
+    summary.push(`• Indication: ${indText}`);
+    summary.push(`• Route: ${route === "IV" ? "Intravenous" : "Oral"} (IV/PO interchangeable for dose).`);
+    summary.push("");
+    summary.push("Patient & renal:");
+    summary.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; TBW: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; dosing weight: ${fmt(dw,1)} kg.`);
+    summary.push(`• SCr: ${fmt(scr,2)} mg/dL; estimated CrCl (CG): ${fmt(crcl,0)} mL/min (${renalInfo.crclBand}).`);
+    summary.push("");
+    summary.push("Regimen:");
+    summary.push(`• Base regimen (CrCl ≥50 mL/min): ${baseRegimenText}.`);
+    summary.push(`• Renal-adjusted regimen: ${renalInfo.regimenText}`);
+    summary.push(`• Dialysis/very low CrCl note: ${renalInfo.dialysisText}`);
+    summary.push("");
+    summary.push("Safety:");
+    summary.push(`• Pregnancy: ${pregnancy}. QT/tendon/aneurysm high-risk: ${qtrisk}.`);
+    summary.push(`• Global safety flag: ${safetyMsg}`);
+    summary.push("");
+    summary.push("PK (population estimates, not TDM):");
+    summary.push(`• Vd ≈ ${fmt(pk.vd,1)} L (${fmt(pk.vd && tbw ? pk.vd/tbw : null,2)} L/kg).`);
+    summary.push(`• CL ≈ ${fmt(pk.cl,2)} L/h; ke ≈ ${fmt(pk.ke,3)} h⁻¹; t½ ≈ ${fmt(pk.tHalf,1)} h.`);
+    summary.push(`• Predicted Cmax (end of 1-h infusion or ~Tmax PO): ${fmt(pk.cmax,1)} mg/L.`);
+    summary.push(`• Predicted Cmin (end of interval): ${fmt(pk.cmin,2)} mg/L.`);
+    summary.push("");
+    summary.push("Notes:");
+    summary.push(`• Additional risk/clinical notes: ${notes}`);
+    summary.push("• This tool reflects labeled dosing and simple CrCl-based adjustments; always cross-check against local guidelines, antibiogram, and stewardship policies.");
+    summary.push("• PK values are approximate and not validated for individual dose optimization or MIC-targeted AUC/MIC modeling.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("sex").value = "";
+    document.getElementById("pregnancy").value = "No";
+    document.getElementById("qtrisk").value = "No";
+    document.getElementById("notes").value = "";
+    document.getElementById("route").value = "PO";
+    document.getElementById("indication").value = "HAP";
+    setDefaultsFromIndication();
+    [
+      "crclBandOut","baseRegimenOut","renalRegimenOut","dialysisOut",
+      "safetyOut","vdOut","clOut","keOut","tHalfOut","cmaxOut","cminOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data and select indication, then click “Calculate”.";
+    document.getElementById("safetyPill").style.display = "none";
+  });
+</script>
+</body>
+</html>

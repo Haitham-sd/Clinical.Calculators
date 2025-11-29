@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Doxorubicin Protocol, PK & Cumulative Dose Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+      color-scheme: light;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #7a1631;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1200px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.1fr) minmax(260px, 1.1fr) minmax(260px, 1.2fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #7a1631;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #7a1631;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #7a1631;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1200px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Doxorubicin Protocol, PK & Cumulative Dose Calculator</h1>
+  <p>For educational and development use only before clinical deployment.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- Patient + BSA -->
+    <section class="card">
+      <h2>Patient data</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Patient age (years)</label>
+          <input type="number" id="age" min="16" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="120" max="220" step="0.5">
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" min="30" max="200" step="0.1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Body surface area (Mosteller, m²)</label>
+        <input type="text" id="bsa" readonly>
+        <div class="hint">BSA = √(height(cm) × weight(kg) / 3600).</div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">Baseline cumulative dose</h2>
+      <div class="field">
+        <label>Previous anthracycline cumulative dose (mg/m²)</label>
+        <input type="number" id="prevCumMgM2" min="0" max="1500" step="1">
+        <div class="hint">Include prior doxorubicin, epirubicin, daunorubicin equivalents if known (converted to doxorubicin-equivalent mg/m²).</div>
+      </div>
+
+      <div class="field">
+        <label>Free-text notes (risk factors, cardiac history, etc.)</label>
+        <textarea id="notes" placeholder="LV dysfunction, mediastinal RT, HER2 therapy, etc."></textarea>
+      </div>
+    </section>
+
+    <!-- Protocol & hepatic function -->
+    <section class="card">
+      <h2>Protocol & hepatic function</h2>
+
+      <div class="field">
+        <label>Protocol</label>
+        <select id="protocol">
+          <option value="CUSTOM">Custom / user-defined</option>
+          <option value="AC21">AC breast adjuvant: 60 mg/m² day 1 q21d ×4</option>
+          <option value="AC14">Dose-dense AC: 60 mg/m² day 1 q14d ×4</option>
+          <option value="CHOP21">CHOP / R-CHOP: 50 mg/m² day 1 q21d ×6</option>
+          <option value="ABVD">ABVD: 25 mg/m² days 1 & 15 q28d ×6</option>
+          <option value="SINGLE21">Label single-agent/combination: 60–75 mg/m² q21–28d</option>
+        </select>
+        <div class="hint">Presets are based on contemporary protocols and product labels; all values remain editable.</div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Doxorubicin dose per administration (mg/m²)</label>
+          <input type="number" id="dosePerAdminMgM2" min="5" max="120" step="1">
+        </div>
+        <div class="field">
+          <label>Doses per cycle (number of doxo doses)</label>
+          <input type="number" id="dosesPerCycle" min="1" max="14" step="1">
+          <div class="hint">AC/CHOP: 1; ABVD: 2 (days 1 & 15).</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Cycle length (days)</label>
+          <input type="number" id="cycleLengthDays" min="7" max="35" step="1">
+        </div>
+        <div class="field">
+          <label>Planned number of cycles</label>
+          <input type="number" id="plannedCycles" min="1" max="12" step="1">
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">Hepatic function (dose modification)</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Total bilirubin (mg/dL)</label>
+          <input type="number" id="bilirubin" min="0" max="20" step="0.1">
+        </div>
+        <div class="field">
+          <label>AST/ALT (×ULN, optional)</label>
+          <input type="number" id="astAlt" min="0" max="20" step="0.1">
+        </div>
+      </div>
+      <div class="hint">
+        Typical rule: bilirubin 1.2–3 → 50% dose; 3.1–5 → 25% dose; &gt;5 mg/dL → avoid doxorubicin. Some centers also apply AST/ALT cutoffs.
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+      <small>Always confirm doses against local protocols, especially in hepatic impairment, pediatrics, and heavily pretreated patients.</small>
+    </section>
+
+    <!-- Dosing & cardiotoxicity outputs -->
+    <section class="card">
+      <h2>Dosing & cardiotoxicity assessment</h2>
+      <div id="doseOutputs">
+        <div class="output-row">
+          <span class="output-label">Protocol description</span>
+          <span class="output-value" id="protocolDescOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Hepatic dose factor</span>
+          <span class="output-value" id="hepFactorOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Per administration dose (mg)</span>
+          <span class="output-value" id="perAdminMgOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Total doxo per cycle (mg/m²)</span>
+          <span class="output-value" id="perCycleMgM2Out">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Total doxo per cycle (mg, absolute)</span>
+          <span class="output-value" id="perCycleMgAbsOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Planned additional cumulative (mg/m²)</span>
+          <span class="output-value" id="plannedAddCumOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Total cumulative after plan (mg/m²)</span>
+          <span class="output-value" id="totalCumOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Cardiotoxicity risk band</span>
+          <span class="output-value" id="cardioBandOut">–</span>
+        </div>
+        <div id="cardioPill" class="pill" style="display:none;"></div>
+        <hr>
+        <h2 style="margin-top:0.4rem;">Summary</h2>
+        <div class="summary-text" id="summaryText">
+          Enter patient data, select or customize a protocol, then click “Calculate”.
+        </div>
+      </div>
+    </section>
+
+    <!-- PK outputs card -->
+    <section class="card">
+      <h2>Pharmacokinetics (population model)</h2>
+      <small>Adult IV systemic, 1-compartment approximation from CL and Vd,ss ranges in product information and PK studies.</small>
+      <hr>
+      <div class="output-row">
+        <span class="output-label">Vd,ss (model, BSA-scaled)</span>
+        <span class="output-value" id="vdPKOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">CL (model, BSA-scaled)</span>
+        <span class="output-value" id="clPKOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">kₑ</span>
+        <span class="output-value" id="kePKOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">t½</span>
+        <span class="output-value" id="tHalfPKOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Example V₁ (central volume)</span>
+        <span class="output-value" id="v1PKOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">C₀ after doxo bolus (mg/L)</span>
+        <span class="output-value" id="c0PKOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">AUC (per administration)</span>
+        <span class="output-value" id="aucPKOut">–</span>
+      </div>
+      <div class="hint">
+        Model parameters (per m²): Vd,ss≈1000 L/m² (range ≈809–1214), CL≈40 L/h/m² (range ≈27.5–59.6), t½ typically 20–40 h.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  This calculator encodes standard IV systemic adult doxorubicin dosing ranges and common
+  protocols (AC, CHOP, ABVD) with cardiotoxicity thresholds around 400–450–550 mg/m²,
+  hepatic dose-reduction rules from product labels, and a BSA-based PK model derived from
+  human CL and Vd,ss ranges. 
+</footer>
+
+<script>
+  // ----- Protocol presets -----
+  const protocols = {
+    "CUSTOM": {
+      id: "CUSTOM",
+      name: "Custom / user-defined",
+      description: "User-defined doxorubicin schedule.",
+      doseMgM2: 60,
+      dosesPerCycle: 1,
+      cycleLengthDays: 21,
+      defaultCycles: 6
+    },
+    "AC21": {
+      id: "AC21",
+      name: "AC breast adjuvant q21d",
+      description: "Adjuvant/neoadjuvant AC: doxorubicin 60 mg/m² IV day 1 q21 days ×4 cycles.",
+      doseMgM2: 60,
+      dosesPerCycle: 1,
+      cycleLengthDays: 21,
+      defaultCycles: 4
+    },
+    "AC14": {
+      id: "AC14",
+      name: "Dose-dense AC q14d",
+      description: "Dose-dense AC: doxorubicin 60 mg/m² IV day 1 q14 days ×4 cycles.",
+      doseMgM2: 60,
+      dosesPerCycle: 1,
+      cycleLengthDays: 14,
+      defaultCycles: 4
+    },
+    "CHOP21": {
+      id: "CHOP21",
+      name: "CHOP / R-CHOP q21d",
+      description: "CHOP/R-CHOP: doxorubicin 50 mg/m² IV day 1 q21 days ×6 cycles.",
+      doseMgM2: 50,
+      dosesPerCycle: 1,
+      cycleLengthDays: 21,
+      defaultCycles: 6
+    },
+    "ABVD": {
+      id: "ABVD",
+      name: "ABVD q28d",
+      description: "ABVD: doxorubicin 25 mg/m² IV days 1 & 15 q28 days ×6 cycles (adjust per center).",
+      doseMgM2: 25,
+      dosesPerCycle: 2,    // days 1 & 15
+      cycleLengthDays: 28,
+      defaultCycles: 6
+    },
+    "SINGLE21": {
+      id: "SINGLE21",
+      name: "Single-agent/combo label",
+      description: "Label single-agent or combination: 60–75 mg/m² IV q21–28d. User sets exact dose.",
+      doseMgM2: 60,
+      dosesPerCycle: 1,
+      cycleLengthDays: 21,
+      defaultCycles: 6
+    }
+  };
+
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // BSA calculation when height/weight change
+  function calcBSA() {
+    const h = parseFloat(document.getElementById("height").value);
+    const w = parseFloat(document.getElementById("weight").value);
+    const bsaInput = document.getElementById("bsa");
+    if (h > 0 && w > 0) {
+      const bsa = Math.sqrt((h * w) / 3600);
+      bsaInput.value = roundVal(bsa, 2).toFixed(2);
+    } else {
+      bsaInput.value = "";
+    }
+  }
+
+  document.getElementById("height").addEventListener("input", calcBSA);
+  document.getElementById("weight").addEventListener("input", calcBSA);
+
+  // Populate fields when protocol changes
+  document.getElementById("protocol").addEventListener("change", () => {
+    const key = document.getElementById("protocol").value;
+    const proto = protocols[key];
+    if (!proto) return;
+    document.getElementById("dosePerAdminMgM2").value = proto.doseMgM2;
+    document.getElementById("dosesPerCycle").value = proto.dosesPerCycle;
+    document.getElementById("cycleLengthDays").value = proto.cycleLengthDays;
+    document.getElementById("plannedCycles").value = proto.defaultCycles;
+    document.getElementById("protocolDescOut").textContent = proto.description;
+  });
+
+  // Initial default
+  document.getElementById("protocol").value = "AC21";
+  document.getElementById("protocol").dispatchEvent(new Event("change"));
+
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const h = parseFloat(document.getElementById("height").value);
+    const w = parseFloat(document.getElementById("weight").value);
+    const bsa = parseFloat(document.getElementById("bsa").value);
+    const prevCum = parseFloat(document.getElementById("prevCumMgM2").value);
+    const notes = document.getElementById("notes").value || "None";
+
+    const protoKey = document.getElementById("protocol").value;
+    const proto = protocols[protoKey];
+
+    let dosePerAdminMgM2 = parseFloat(document.getElementById("dosePerAdminMgM2").value);
+    let dosesPerCycle = parseFloat(document.getElementById("dosesPerCycle").value);
+    let cycleLengthDays = parseFloat(document.getElementById("cycleLengthDays").value);
+    let plannedCycles = parseFloat(document.getElementById("plannedCycles").value);
+
+    const bilirubin = parseFloat(document.getElementById("bilirubin").value);
+    const astAlt = parseFloat(document.getElementById("astAlt").value);
+
+    if (!bsa || !dosePerAdminMgM2 || !dosesPerCycle || !cycleLengthDays || !plannedCycles) {
+      alert("Please ensure BSA, dose per administration, doses per cycle, cycle length, and planned cycles are entered.");
+    }
+
+    // Hepatic dose factor
+    let hepFactor = 1.0;
+    let hepComment = "Full dose (no hepatic reduction).";
+
+    if (!isNaN(bilirubin)) {
+      if (bilirubin < 1.2) {
+        hepFactor = 1.0;
+        hepComment = "Bilirubin <1.2 mg/dL → full dose.";
+      } else if (bilirubin <= 3.0) {
+        hepFactor = 0.5;
+        hepComment = "Bilirubin 1.2–3.0 mg/dL → give ~50% of usual dose.";
+      } else if (bilirubin <= 5.0) {
+        hepFactor = 0.25;
+        hepComment = "Bilirubin 3.1–5.0 mg/dL → give ~25% of usual dose.";
+      } else {
+        hepFactor = 0.0;
+        hepComment = "Bilirubin >5.0 mg/dL → doxorubicin contraindicated / omit.";
+      }
+    }
+
+    if (!isNaN(astAlt)) {
+      if (astAlt > 3 && hepFactor > 0) {
+        hepComment += " AST/ALT >3×ULN – consider further reduction or omission per local policy.";
+      }
+    }
+
+    // Apply hepatic factor to mg/m² dose
+    const adjustedDosePerAdminMgM2 = dosePerAdminMgM2 * hepFactor;
+
+    // Per admin absolute dose in mg
+    const perAdminMg = (bsa && adjustedDosePerAdminMgM2)
+      ? adjustedDosePerAdminMgM2 * bsa
+      : null;
+
+    // Per cycle mg/m² and mg
+    const perCycleMgM2 = adjustedDosePerAdminMgM2 * dosesPerCycle;
+    const perCycleMgAbs = perAdminMg !== null
+      ? perAdminMg * dosesPerCycle
+      : null;
+
+    // Planned added cumulative mg/m²
+    const plannedAddCum = perCycleMgM2 * plannedCycles;
+
+    const prevCumSafe = isNaN(prevCum) ? 0 : prevCum;
+    const totalCum = plannedAddCum + prevCumSafe;
+
+    // Cardiotoxicity risk band
+    let cardioBand = "Unknown";
+    let cardioText = "";
+    let pillClass = "pill-warn";
+
+    if (!isNaN(totalCum)) {
+      if (totalCum < 250) {
+        cardioBand = "Low (<250 mg/m²)";
+        cardioText = "Low cumulative anthracycline exposure; cardiomyopathy risk is present but relatively low in the absence of other risk factors.";
+        pillClass = "pill-ok";
+      } else if (totalCum < 400) {
+        cardioBand = "Moderate (250–399 mg/m²)";
+        cardioText = "Rising risk; monitor LVEF at baseline and periodically.";
+        pillClass = "pill-warn";
+      } else if (totalCum < 450) {
+        cardioBand = "High (400–449 mg/m²)";
+        cardioText = "Many references recommend heightened vigilance and considering alternatives as dose approaches 450 mg/m², especially with additional cardiac risk factors.";
+        pillClass = "pill-alert";
+      } else if (totalCum <= 550) {
+        cardioBand = "Very high (450–550 mg/m²)";
+        cardioText = "Traditional upper limit ~450 mg/m²; above this, cardiomyopathy risk increases markedly. Proceed only with strong justification and cardiology input.";
+        pillClass = "pill-alert";
+      } else {
+        cardioBand = "Extreme (>550 mg/m²)";
+        cardioText = "Cumulative dose >550 mg/m² associated with substantial cardiomyopathy risk. Further exposure generally avoided except in exceptional circumstances.";
+        pillClass = "pill-alert";
+      }
+    }
+
+    // Update dosing UI
+    document.getElementById("hepFactorOut").textContent =
+      hepFactor === 0 ? "0 (omit)" : `${fmt(hepFactor, 2)} × of usual dose`;
+    document.getElementById("perAdminMgOut").textContent =
+      perAdminMg != null ? `${fmt(perAdminMg, 0)} mg` : "–";
+    document.getElementById("perCycleMgM2Out").textContent =
+      perCycleMgM2 ? `${fmt(perCycleMgM2, 1)} mg/m²` : "–";
+    document.getElementById("perCycleMgAbsOut").textContent =
+      perCycleMgAbs != null ? `${fmt(perCycleMgAbs, 0)} mg` : "–";
+    document.getElementById("plannedAddCumOut").textContent =
+      plannedAddCum ? `${fmt(plannedAddCum, 1)} mg/m²` : "–";
+    document.getElementById("totalCumOut").textContent =
+      !isNaN(totalCum) ? `${fmt(totalCum, 1)} mg/m²` : "–";
+    document.getElementById("cardioBandOut").textContent = cardioBand;
+
+    const protoDesc = proto ? proto.description : "Custom / user-defined regimen.";
+    document.getElementById("protocolDescOut").textContent = protoDesc;
+
+    const pill = document.getElementById("cardioPill");
+    pill.style.display = "inline-block";
+    pill.textContent = "Cardiac risk: " + cardioBand;
+    pill.className = "pill " + pillClass;
+
+    // ---- PK MODEL (population, 1-comp approximation) ----
+    // Use BSA to scale CL and Vd,ss:
+    // Vd,ss_per_m2 = 1000 L/m², CL_per_m2 = 40 L/h/m²
+    let vdPK = null, clPK = null, kePK = null, tHalfPK = null, v1PK = null, c0PK = null, aucPK = null;
+
+    if (!isNaN(bsa) && bsa > 0) {
+      const Vd_ss_per_m2 = 1000;  // L/m²
+      const CL_per_m2 = 40;       // L/h/m²
+
+      vdPK = Vd_ss_per_m2 * bsa;  // L
+      clPK = CL_per_m2 * bsa;     // L/h
+
+      if (clPK && vdPK) {
+        kePK = clPK / vdPK;
+        tHalfPK = 0.693 / kePK;
+      }
+
+      // Approximate central volume V1 ≈ 20 L/m² × BSA
+      const V1_per_m2 = 20;       // L/m²
+      v1PK = V1_per_m2 * bsa;     // L
+
+      if (v1PK && perAdminMg != null) {
+        c0PK = perAdminMg / v1PK; // mg/L
+      }
+
+      // AUC per administration = Dose (mg) / CL (L/h)
+      if (perAdminMg != null && clPK) {
+        aucPK = perAdminMg / clPK; // mg·h/L
+      }
+    }
+
+    // Update PK UI
+    document.getElementById("vdPKOut").textContent =
+      vdPK ? `${fmt(vdPK, 0)} L` : "–";
+    document.getElementById("clPKOut").textContent =
+      clPK ? `${fmt(clPK, 1)} L/h` : "–";
+    document.getElementById("kePKOut").textContent =
+      kePK ? `${fmt(kePK, 3)} 1/h` : "–";
+    document.getElementById("tHalfPKOut").textContent =
+      tHalfPK ? `${fmt(tHalfPK, 1)} h` : "–";
+    document.getElementById("v1PKOut").textContent =
+      v1PK ? `${fmt(v1PK, 1)} L` : "–";
+    document.getElementById("c0PKOut").textContent =
+      c0PK ? `${fmt(c0PK, 2)} mg/L` : "–";
+    document.getElementById("aucPKOut").textContent =
+      aucPK ? `${fmt(aucPK, 1)} mg·h/L` : "–";
+
+    // Summary text
+    const summaryLines = [];
+
+    summaryLines.push(`Protocol: ${proto ? proto.name : "Custom"}`);
+    summaryLines.push(protoDesc);
+    summaryLines.push("");
+    summaryLines.push("Patient:");
+    summaryLines.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}`);
+    summaryLines.push(`• Height: ${isNaN(h) ? "n/a" : h + " cm"}, Weight: ${isNaN(w) ? "n/a" : w + " kg"}, BSA: ${fmt(bsa,2)} m²`);
+    summaryLines.push("");
+    summaryLines.push("Dosing (after hepatic adjustment):");
+    summaryLines.push(`• Doxorubicin per administration: ${fmt(adjustedDosePerAdminMgM2,1)} mg/m² → ${fmt(perAdminMg,0)} mg actual.`);
+    summaryLines.push(`• Doses per cycle: ${isNaN(dosesPerCycle) ? "n/a" : dosesPerCycle}, cycle length: ${isNaN(cycleLengthDays) ? "n/a" : cycleLengthDays + " days"}.`);
+    summaryLines.push(`• Per cycle total: ${fmt(perCycleMgM2,1)} mg/m² → ${fmt(perCycleMgAbs,0)} mg.`);
+    summaryLines.push(`• Planned cycles: ${isNaN(plannedCycles) ? "n/a" : plannedCycles} → additional cumulative: ${fmt(plannedAddCum,1)} mg/m².`);
+    summaryLines.push("");
+    summaryLines.push("Hepatic function & dose factor:");
+    summaryLines.push(`• Bilirubin: ${isNaN(bilirubin) ? "n/a" : bilirubin + " mg/dL"}, AST/ALT: ${isNaN(astAlt) ? "n/a" : astAlt + " ×ULN"}.`);
+    summaryLines.push(`• Applied hepatic factor: ${hepFactor === 0 ? "0 (omit doxorubicin)" : fmt(hepFactor,2)}. ${hepComment}`);
+    summaryLines.push("");
+    summaryLines.push("Cumulative dose & cardiotoxicity risk:");
+    summaryLines.push(`• Prior cumulative dose: ${fmt(prevCumSafe,1)} mg/m².`);
+    summaryLines.push(`• Total estimated cumulative after this plan: ${fmt(totalCum,1)} mg/m².`);
+    summaryLines.push(`• Risk band: ${cardioBand}.`);
+    summaryLines.push(`• Comment: ${cardioText}`);
+    summaryLines.push("");
+    summaryLines.push("Population PK (approximate):");
+    summaryLines.push(`• Vd,ss: ${fmt(vdPK,0)} L; CL: ${fmt(clPK,1)} L/h; t½: ${fmt(tHalfPK,1)} h; kₑ: ${fmt(kePK,3)} 1/h.`);
+    summaryLines.push(`• Central V₁: ${fmt(v1PK,1)} L; C₀ (per administration): ${fmt(c0PK,2)} mg/L; AUC (per administration): ${fmt(aucPK,1)} mg·h/L.`);
+    summaryLines.push("");
+    summaryLines.push("Additional notes / comorbidities:");
+    summaryLines.push(`• ${notes}`);
+    summaryLines.push("");
+    summaryLines.push("This output does not replace clinical judgement or institutional protocols. PK values are model-based estimates using BSA-scaled CL and Vd,ss from adult studies; actual patient PK may differ, particularly in hepatic impairment, extremes of weight, or drug interactions.");
+
+    document.getElementById("summaryText").textContent = summaryLines.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => {
+      if (el.id !== "dosePerAdminMgM2" &&
+          el.id !== "dosesPerCycle" &&
+          el.id !== "cycleLengthDays" &&
+          el.id !== "plannedCycles") {
+        el.value = "";
+      }
+    });
+    document.getElementById("notes").value = "";
+    document.getElementById("height").value = "";
+    document.getElementById("weight").value = "";
+    document.getElementById("bsa").value = "";
+    document.getElementById("protocol").value = "AC21";
+    document.getElementById("protocol").dispatchEvent(new Event("change"));
+
+    ["hepFactorOut","perAdminMgOut","perCycleMgM2Out","perCycleMgAbsOut",
+     "plannedAddCumOut","totalCumOut","cardioBandOut","protocolDescOut",
+     "vdPKOut","clPKOut","kePKOut","tHalfPKOut","v1PKOut","c0PKOut","aucPKOut"]
+      .forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data, select or customize a protocol, then click “Calculate”.";
+    const pill = document.getElementById("cardioPill");
+    pill.style.display = "none";
+  });
+</script>
+</body>
+</html>

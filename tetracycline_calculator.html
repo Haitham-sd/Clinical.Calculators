@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tetracycline Dosing & PK Calculator (Adult & Pediatric ≥8 y)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #4a3f8c;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1250px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.1fr) minmax(260px, 1.1fr) minmax(260px, 1.2fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #4a3f8c;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #4a3f8c;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #4a3f8c;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1250px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Tetracycline Dosing & Pharmacokinetics Calculator</h1>
+  <p>Adult and pediatric ≥8 years. Uses Cockcroft–Gault CrCl, label-based dosing (usual 1 g/day) and simple PK estimates. Educational use only.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- PATIENT & RENAL -->
+    <section class="card">
+      <h2>Patient data & renal function</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="1" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="50" max="220" step="0.5">
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="tbw" min="5" max="250" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Serum creatinine (mg/dL)</label>
+          <input type="number" id="scr" min="0.2" max="10" step="0.01">
+        </div>
+        <div class="field">
+          <label>Estimated CrCl (Cockcroft–Gault, mL/min)<br><small>Adults only (≥18 y); children use weight-based dosing.</small></label>
+          <input type="text" id="crcl" readonly>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>IBW (kg)</label>
+          <input type="text" id="ibw" readonly>
+        </div>
+        <div class="field">
+          <label>Dosing weight for CrCl (kg)</label>
+          <input type="text" id="dw" readonly>
+          <div class="hint">AdjBW if TBW &gt;120% IBW; otherwise TBW.</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">Key exclusions</h2>
+      <div class="field">
+        <label>Pregnancy / breastfeeding</label>
+        <select id="pregnancy">
+          <option value="No">No</option>
+          <option value="Yes">Yes – tetracycline contraindicated</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Age &lt; 8 years?</label>
+        <select id="age8">
+          <option value="No">No (≥8 years)</option>
+          <option value="Yes">Yes (&lt;8 years – avoid tetracycline)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Other major risks (e.g., severe hepatic disease, esophageal stricture)</label>
+        <textarea id="notes"></textarea>
+      </div>
+    </section>
+
+    <!-- DOSING LOGIC -->
+    <section class="card">
+      <h2>Dosing strategy</h2>
+
+      <div class="field">
+        <label>Patient category</label>
+        <select id="ptCategory">
+          <option value="ADULT">Adult (≥18 years)</option>
+          <option value="PED">Pediatric ≥8 years (weight-based)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Indication category (simplified)</label>
+        <select id="indication">
+          <option value="STANDARD">Standard bacterial infection (respiratory, skin, etc.)</option>
+          <option value="SEVERE">Severe/systemic infection</option>
+          <option value="ACNE">Acne vulgaris (long-term)</option>
+          <option value="H_PYLORI">H. pylori (quadruple regimen)</option>
+          <option value="STI">STD / urogenital (e.g., NGU)</option>
+          <option value="CUSTOM">Custom daily dose (enter manually)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Base adult daily dose (mg/day)</label>
+          <input type="number" id="adultDailyBase" min="250" max="4000" step="250">
+          <div class="hint">Label: usual 1 g/day (e.g., 500 mg BID or 250 mg QID). Up to 2 g/day in severe infection.</div>
+        </div>
+        <div class="field">
+          <label>Pediatric daily range (mg/kg/day, divided q6h)</label>
+          <input type="text" id="pedRange" readonly>
+          <div class="hint">Label: 25–50 mg/kg/day in 4 divided doses (≥8 y).</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Preferred dosing frequency</label>
+          <select id="freq">
+            <option value="Q6">q6h (QID)</option>
+            <option value="Q12">q12h (BID)</option>
+          </select>
+          <div class="hint">Usual: 250 mg QID or 500 mg BID for adults.</div>
+        </div>
+        <div class="field">
+          <label>Round per dose to nearest (mg)</label>
+          <input type="number" id="roundStep" min="50" max="500" step="50" value="250">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Course duration (days)</label>
+        <input type="number" id="days" min="1" max="60" step="1" value="10">
+        <div class="hint">Typical acute infections: 7–14 days; some indications longer.</div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate dosing & PK</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <small>
+        Adult daily doses follow tetracycline labeling (usual 1 g/day, higher for severe infection). Pediatric doses (≥8 years)
+        follow 25–50 mg/kg/day in 4 divided doses. In renal impairment, total daily dose should be reduced and/or interval extended.
+      </small>
+    </section>
+
+    <!-- OUTPUT + PK -->
+    <section class="card">
+      <h2>Dose recommendation & PK (approximate)</h2>
+
+      <div class="output-row">
+        <span class="output-label">Renal category (adult)</span>
+        <span class="output-value" id="crclBandOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Renal dose advice</span>
+        <span class="output-value" id="renalAdviceOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Daily dose after renal adjustment</span>
+        <span class="output-value" id="dailyAdjOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Per-dose amount & frequency</span>
+        <span class="output-value" id="perDoseOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Approx. mg/kg/day (actual)</span>
+        <span class="output-value" id="mgkgOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Predicted PK (one-compartment, approximate)</h2>
+      <small>Uses Vd ≈ 0.7 L/kg and half-life 8–16 h depending on renal function. For education only (not for TDM).</small>
+
+      <div class="output-row">
+        <span class="output-label">Volume of distribution (Vd)</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Elimination half-life (t½)</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke</span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Clearance (CL ≈ ke × Vd)</span>
+        <span class="output-value" id="clOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Predicted C<sub>max,ss</sub> (peak)</span>
+        <span class="output-value" id="cmaxOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted C<sub>min,ss</sub> (trough)</span>
+        <span class="output-value" id="cminOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Safety / guideline fit</span>
+        <span class="output-value" id="safetyOut">–</span>
+      </div>
+      <div id="safetyPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2>Text summary</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data, choose adult vs pediatric and indication, then click “Calculate dosing & PK”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Tetracycline dosing based on standard references (usual adult dose 1 g/day; up to 2 g/day in severe infection; pediatric ≥8 years
+  25–50 mg/kg/day divided q6h). In renal impairment, total dose should be reduced and/or interval extended; avoid in significant
+  renal failure if alternatives exist. Pharmacokinetic outputs are population estimates only and must not replace clinical judgement
+  or therapeutic drug monitoring. Always follow local guidelines.
+</footer>
+
+<script>
+  // ---------- Utility functions ----------
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // ---------- IBW / AdjBW / CrCl ----------
+  function updateDerived() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") ibw = 50 + 2.3 * over5ft;
+      else ibw = 45.5 + 2.3 * over5ft;
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else if (tbw < ibw) {
+        dw = tbw;
+      } else {
+        dw = ibw;
+      }
+    } else if (tbw) {
+      dw = tbw;
+    }
+
+    if (age && sex && scr && dw && age >= 18) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw,1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw,1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl,0) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateDerived);
+  });
+
+  // ---------- Indication -> default adult daily dose & pediatric range ----------
+  function updateDoseDefaults() {
+    const ind = document.getElementById("indication").value;
+    const ptCat = document.getElementById("ptCategory").value;
+
+    let adultDaily = 1000; // mg/day, usual
+    if (ind === "STANDARD") adultDaily = 1000;
+    else if (ind === "SEVERE") adultDaily = 2000;
+    else if (ind === "ACNE") adultDaily = 500;      // 250–500 mg BID often used
+    else if (ind === "H_PYLORI") adultDaily = 2000; // 500 mg QID in quadruple regimens
+    else if (ind === "STI") adultDaily = 2000;      // 500 mg QID in some older regimens
+    else if (ind === "CUSTOM") adultDaily = 1000;
+
+    if (ptCat === "ADULT") {
+      document.getElementById("adultDailyBase").value = adultDaily;
+    }
+
+    // Pediatric range text fixed
+    document.getElementById("pedRange").value = "25–50 mg/kg/day divided q6h (≥8 y)";
+
+  }
+  document.getElementById("indication").addEventListener("change", updateDoseDefaults);
+  document.getElementById("ptCategory").addEventListener("change", updateDoseDefaults);
+  updateDoseDefaults();
+
+  // ---------- Main computation ----------
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+
+    const pregnancy = document.getElementById("pregnancy").value;
+    const age8 = document.getElementById("age8").value;
+    const notes = document.getElementById("notes").value || "None.";
+
+    const ptCat = document.getElementById("ptCategory").value;
+    const indication = document.getElementById("indication").value;
+    let adultDailyBase = parseFloat(document.getElementById("adultDailyBase").value);
+    const freq = document.getElementById("freq").value;
+    const roundStep = parseFloat(document.getElementById("roundStep").value);
+    const days = parseFloat(document.getElementById("days").value);
+
+    if (!age || !sex || !hCm || !tbw) {
+      alert("Please complete age, sex, height and weight.");
+    }
+    if (ptCat === "ADULT" && (age < 18)) {
+      alert("Adult category selected but age <18. Please switch to pediatric if appropriate.");
+    }
+    if (ptCat === "PED" && age < 8) {
+      alert("Pediatric tetracycline is recommended only for ≥8 years because of tooth/bone effects.");
+    }
+    if (pregnancy === "Yes") {
+      alert("Pregnancy/breastfeeding: tetracycline is contraindicated. Use alternative.");
+    }
+    if (age8 === "Yes") {
+      alert("Age <8 years: tetracycline should generally be avoided. Use alternative.");
+    }
+
+    // ---------- Determine daily dose (before renal adjustment) ----------
+    let dailyDose = null; // mg/day
+    let mgkgDay = null;
+
+    if (ptCat === "ADULT") {
+      if (!adultDailyBase || adultDailyBase <= 0) {
+        adultDailyBase = 1000;
+      }
+      // clamp adult daily base within 250–2000 mg/day
+      if (adultDailyBase < 250) adultDailyBase = 250;
+      if (adultDailyBase > 2000) adultDailyBase = 2000;
+      dailyDose = adultDailyBase;
+    } else {
+      // Pediatric ≥8 years: 25–50 mg/kg/day
+      const lower = 25;
+      const upper = 50;
+      if (tbw) {
+        const mid = (lower + upper) / 2;
+        dailyDose = mid * tbw; // mg/day
+      }
+    }
+
+    if (!dailyDose) {
+      alert("Unable to determine base daily dose. Please check inputs.");
+      return;
+    }
+
+    // ---------- Renal adjustment (adults) ----------
+    let crclBand = "Not applicable (pediatric or no SCr)";
+    let renalAdvice = "–";
+    let renalFactor = 1.0;
+
+    if (ptCat === "ADULT" && !isNaN(crcl)) {
+      if (crcl >= 60) {
+        crclBand = "CrCl ≥60 mL/min – normal/mild impairment";
+        renalAdvice = "Use usual adult dose with standard intervals; monitor kidney function.";
+        renalFactor = 1.0;
+      } else if (crcl >= 30) {
+        crclBand = "CrCl 30–59 mL/min – moderate impairment";
+        renalAdvice = "Reduce total daily dose by ~50% and/or extend interval (e.g., q12–24h).";
+        renalFactor = 0.5;
+      } else if (crcl >= 10) {
+        crclBand = "CrCl 10–29 mL/min – severe impairment";
+        renalAdvice = "Avoid tetracycline if possible; if used, consider 25–50% of usual daily dose with prolonged interval.";
+        renalFactor = 0.33;
+      } else {
+        crclBand = "CrCl <10 mL/min or dialysis – very severe impairment";
+        renalAdvice = "Tetracycline generally avoided; if absolutely necessary, very low dose and specialist input required.";
+        renalFactor = 0.25;
+      }
+    }
+
+    if (ptCat === "PED") {
+      crclBand = "Pediatric ≥8 y – adult CrCl equation not used; dose by mg/kg/day.";
+      renalAdvice = "In pediatric CKD, individualize with pediatric nephrology/ID input; reduce dose/extend interval as needed.";
+    }
+
+    document.getElementById("crclBandOut").textContent = crclBand;
+    document.getElementById("renalAdviceOut").textContent = renalAdvice;
+
+    if (pregnancy === "Yes" || age8 === "Yes") {
+      renalFactor = 0; // effectively "do not recommend"
+    }
+
+    // Adjusted daily dose
+    let dailyAdj = null;
+    if (renalFactor > 0) {
+      dailyAdj = dailyDose * renalFactor;
+      if (ptCat === "ADULT") {
+        if (dailyAdj < 250) dailyAdj = 250;
+        if (dailyAdj > 2000) dailyAdj = 2000;
+      }
+    }
+
+    let perDose = null;
+    let tau = null;
+    let perDoseText = "–";
+
+    if (renalFactor === 0) {
+      document.getElementById("dailyAdjOut").textContent =
+        "Not recommended – tetracycline contraindicated (pregnancy/<8y) or severe CKD.";
+    } else {
+      document.getElementById("dailyAdjOut").textContent =
+        `${fmt(dailyAdj,0)} mg/day for ${fmt(days,0)} day(s).`;
+    }
+
+    if (renalFactor > 0 && dailyAdj) {
+      if (freq === "Q6") {
+        tau = 6;
+        perDose = dailyAdj / 4;
+      } else {
+        tau = 12;
+        perDose = dailyAdj / 2;
+      }
+      if (roundStep && roundStep > 0) {
+        perDose = Math.round(perDose / roundStep) * roundStep;
+      }
+      perDoseText = `${fmt(perDose,0)} mg PO q${tau}h`;
+    }
+
+    document.getElementById("perDoseOut").textContent = perDoseText;
+
+    if (dailyAdj && tbw) {
+      mgkgDay = dailyAdj / tbw;
+      document.getElementById("mgkgOut").textContent =
+        `${fmt(mgkgDay,1)} mg/kg/day (actual).`;
+    } else {
+      document.getElementById("mgkgOut").textContent = "–";
+    }
+
+    // ---------- PK estimates ----------
+    let Vd = null, tHalf = null, ke = null, CL = null;
+    if (tbw) {
+      Vd = 0.7 * tbw; // L, mid-range value
+    }
+
+    // Half-life based on renal status (simplified)
+    if (ptCat === "ADULT" && !isNaN(crcl)) {
+      if (crcl >= 60) tHalf = 8;        // h
+      else if (crcl >= 30) tHalf = 12;  // h
+      else tHalf = 16;                  // h
+    } else {
+      // PED or unknown CrCl: use 8 h as generic adult-ish estimate
+      tHalf = 8;
+    }
+
+    if (Vd && tHalf) {
+      ke = 0.693 / tHalf;
+      CL = ke * Vd;
+    }
+
+    document.getElementById("vdOut").textContent =
+      Vd ? `${fmt(Vd,1)} L (${fmt(Vd/tbw,2)} L/kg)` : "–";
+    document.getElementById("tHalfOut").textContent =
+      tHalf ? `${fmt(tHalf,1)} h` : "–";
+    document.getElementById("keOut").textContent =
+      ke ? `${fmt(ke,3)} h⁻¹` : "–";
+    document.getElementById("clOut").textContent =
+      CL ? `${fmt(CL,2)} L/h` : "–";
+
+    // Predicted steady-state peak/trough (oral bolus approximation)
+    let cmax = null, cmin = null;
+    if (perDose && Vd && ke && tau && renalFactor > 0) {
+      const Dose = perDose; // mg
+      const F = 0.75;       // crude oral bioavailability factor
+      const nFactor = 1 / (1 - Math.exp(-ke * tau));
+      const CpeakIncrement = (Dose * F) / Vd;  // mg/L
+      cmax = CpeakIncrement * nFactor;
+      cmin = cmax * Math.exp(-ke * tau);
+    }
+
+    document.getElementById("cmaxOut").textContent =
+      cmax ? `${fmt(cmax,2)} mg/L (approx.)` : "–";
+    document.getElementById("cminOut").textContent =
+      cmin ? `${fmt(cmin,2)} mg/L (approx.)` : "–";
+
+    // ---------- Safety flag ----------
+    let safetyMsg = "Within typical dosing range; ensure avoidance in pregnancy and children <8 years and adjust in renal impairment.";
+    let safetyClass = "pill-ok";
+
+    if (pregnancy === "Yes" || age8 === "Yes") {
+      safetyMsg = "Tetracycline is contraindicated in pregnancy/breastfeeding and generally avoided in children <8 years.";
+      safetyClass = "pill-alert";
+    } else if (ptCat === "ADULT" && dailyAdj && dailyAdj > 2000) {
+      safetyMsg = "Daily dose >2 g/day exceeds usual maximum; reduce dose.";
+      safetyClass = "pill-alert";
+    } else if (ptCat === "PED" && mgkgDay && mgkgDay > 50) {
+      safetyMsg = "Pediatric dose >50 mg/kg/day exceeds typical range; reduce dose.";
+      safetyClass = "pill-alert";
+    } else if (ptCat === "PED" && mgkgDay && mgkgDay < 20) {
+      safetyMsg = "Pediatric dose <20 mg/kg/day may be subtherapeutic; review indication and dose.";
+      safetyClass = "pill-warn";
+    } else if (ptCat === "ADULT" && !isNaN(crcl) && crcl < 30) {
+      safetyMsg = "Significant renal impairment – tetracycline may accumulate; prefer alternatives and monitor closely if used.";
+      safetyClass = "pill-warn";
+    }
+
+    const safetyPill = document.getElementById("safetyPill");
+    safetyPill.style.display = "inline-block";
+    safetyPill.textContent = (safetyClass === "pill-ok")
+      ? "Within usual range"
+      : "Caution / high-risk";
+    safetyPill.className = "pill " + safetyClass;
+    document.getElementById("safetyOut").textContent = safetyMsg;
+
+    // ---------- Text summary ----------
+    const indText = document.getElementById("indication").options[document.getElementById("indication").selectedIndex].text;
+    const ptText = (ptCat === "ADULT") ? "Adult" : "Pediatric ≥8 years";
+
+    const summary = [];
+    summary.push("Context:");
+    summary.push(`• Patient: ${ptText}; age ${isNaN(age) ? "n/a" : age + " years"}, sex ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; weight: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; CrCl dosing weight: ${fmt(dw,1)} kg.`);
+    summary.push(`• Serum creatinine: ${fmt(scr,2)} mg/dL; estimated CrCl: ${fmt(crcl,0)} mL/min (${crclBand}).`);
+    summary.push(`• Pregnancy/breastfeeding: ${pregnancy}; age <8 y: ${age8}.`);
+    summary.push("");
+    summary.push("Indication & dosing:");
+    summary.push(`• Indication category: ${indText}.`);
+    summary.push(`• Base daily dose (before renal adjustment): ${fmt(dailyDose,0)} mg/day.`);
+    summary.push(`• After renal/pregnancy/age adjustment: ${renalFactor === 0 ? "tetracycline not recommended" : fmt(dailyAdj,0) + " mg/day"} for ${fmt(days,0)} day(s).`);
+    summary.push(`• Practical regimen: ${perDoseText}.`);
+    summary.push(`• Actual intensity: ${mgkgDay ? fmt(mgkgDay,1) + " mg/kg/day" : "n/a"}.`);
+    summary.push("");
+    summary.push("Pharmacokinetic estimates (population):");
+    summary.push(`• Vd ≈ ${fmt(Vd,1)} L (${Vd && tbw ? fmt(Vd/tbw,2) : "n/a"} L/kg).`);
+    summary.push(`• t½ ≈ ${fmt(tHalf,1)} h → ke ≈ ${fmt(ke,3)} h⁻¹; CL ≈ ${fmt(CL,2)} L/h.`);
+    summary.push(`• Steady-state Cmax ≈ ${fmt(cmax,2)} mg/L; Cmin ≈ ${fmt(cmin,2)} mg/L (approximate, assuming regular oral dosing).`);
+    summary.push("");
+    summary.push("Safety & monitoring:");
+    summary.push(`• Safety assessment: ${safetyMsg}`);
+    summary.push("• Avoid co-administration with dairy/antacids/iron, which reduce absorption.");
+    summary.push("• Counsel on esophagitis risk: take with water and remain upright for 30 minutes.");
+    summary.push("• Monitor renal and hepatic function for prolonged courses or high doses.");
+    summary.push("");
+    summary.push("Other notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("This calculator is a PK/dose estimation tool for education and app development. Final dose selection must follow authoritative guidelines, local protocols, microbiology data and clinical judgement.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  // ---------- Reset ----------
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("sex").value = "";
+    document.getElementById("pregnancy").value = "No";
+    document.getElementById("age8").value = "No";
+    document.getElementById("notes").value = "";
+    document.getElementById("ptCategory").value = "ADULT";
+    document.getElementById("indication").value = "STANDARD";
+    document.getElementById("freq").value = "Q6";
+    document.getElementById("roundStep").value = 250;
+    document.getElementById("days").value = 10;
+    updateDerived();
+    updateDoseDefaults();
+    [
+      "crclBandOut","renalAdviceOut","dailyAdjOut","perDoseOut",
+      "mgkgOut","vdOut","tHalfOut","keOut","clOut","cmaxOut","cminOut",
+      "safetyOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data, choose adult vs pediatric and indication, then click “Calculate dosing & PK”.";
+    document.getElementById("safetyPill").style.display = "none";
+  });
+</script>
+</body>
+</html>

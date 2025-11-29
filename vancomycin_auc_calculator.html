@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vancomycin AUC-Based Adult Dosing Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #7b1f28;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1250px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.05fr) minmax(260px, 1.05fr) minmax(260px, 1.3fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #7b1f28;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #7b1f28;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #7b1f28;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1250px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Vancomycin AUC-Based Adult Dosing Calculator</h1>
+  <p>Uses AUC<sub>24</sub>/MIC 400–600 target, Cockcroft–Gault CrCl, and a population PK model (CL = 0.17 + 0.06×CrCl). Adult, IV, non-pregnant, non-dialysis only.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- PATIENT & RENAL -->
+    <section class="card">
+      <h2>Patient data & renal function</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="18" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="120" max="220" step="0.5">
+        </div>
+        <div class="field">
+          <label>Total body weight (kg)</label>
+          <input type="number" id="tbw" min="30" max="250" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Serum creatinine (mg/dL)</label>
+          <input type="number" id="scr" min="0.2" max="10" step="0.01">
+        </div>
+        <div class="field">
+          <label>Estimated CrCl (Cockcroft–Gault, mL/min)</label>
+          <input type="text" id="crcl" readonly>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>IBW (kg)</label>
+          <input type="text" id="ibw" readonly>
+        </div>
+        <div class="field">
+          <label>Dosing weight for PK (kg)</label>
+          <input type="text" id="dw" readonly>
+          <div class="hint">AdjBW if TBW &gt;120% of IBW; otherwise TBW. Loading dose uses TBW.</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">Clinical context / exclusions</h2>
+
+      <div class="field">
+        <label>Infection type (most serious)</label>
+        <select id="infection">
+          <option value="MRSA_SERIOUS">Serious MRSA (bacteremia, endocarditis, pneumonia, osteomyelitis, CNS)</option>
+          <option value="OTHER_SERIOUS">Other serious Gram-positive infection</option>
+          <option value="MODERATE">Moderate infection (e.g., non-severe SSTI)</option>
+          <option value="MILD">Mild infection (legacy trough 10–15; AUC targeting optional)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>ICU / critically ill?</label>
+        <select id="icu">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Pregnancy?</label>
+        <select id="pregnancy">
+          <option value="No">No</option>
+          <option value="Yes">Yes (tool not validated)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Dialysis (HD/PD/CRRT)?</label>
+        <select id="dialysis">
+          <option value="No">No (stable renal function)</option>
+          <option value="Yes">Yes (use dialysis protocol, not this tool)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Other notes (nephrotoxins, AKI risk, etc.)</label>
+        <textarea id="notes"></textarea>
+      </div>
+    </section>
+
+    <!-- TARGETS & REGIMEN -->
+    <section class="card">
+      <h2>PK targets & regimen strategy</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Assumed MIC (mg/L)</label>
+          <input type="number" id="mic" min="0.25" max="2" step="0.25" value="1">
+          <div class="hint">Guideline AUC 400–600 mg·h/L assumes MIC = 1 mg/L by BMD for MRSA.</div>
+        </div>
+        <div class="field">
+          <label>Target AUC<sub>24</sub> (mg·h/L)</label>
+          <input type="number" id="aucTarget" min="300" max="800" step="10" value="500">
+          <div class="hint">Consensus: 400–600; default mid-range 500 mg·h/L.</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Loading dose factor (mg/kg)</label>
+          <input type="number" id="ldMgPerKg" min="10" max="35" step="1" value="25">
+          <div class="hint">20–25 mg/kg serious infection; up to 30–35 mg/kg in some critically ill cases.</div>
+        </div>
+        <div class="field">
+          <label>Max single loading dose (mg)</label>
+          <input type="number" id="ldMax" min="1500" max="3500" step="100" value="3000">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Preferred maintenance interval (if renal function allows)</label>
+        <select id="prefInterval">
+          <option value="AUTO">Auto (based on clearance)</option>
+          <option value="Q8">q8h preference</option>
+          <option value="Q12">q12h preference</option>
+          <option value="Q24">q24h preference</option>
+        </select>
+        <div class="hint">Tool still checks CL/CrCl and may override unsafe combinations.</div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Infusion time (hours)</label>
+          <input type="number" id="infusionH" min="0.5" max="3" step="0.25" value="1.5">
+          <div class="hint">Typical 1–2 h depending on dose.</div>
+        </div>
+        <div class="field">
+          <label>Round doses to nearest (mg)</label>
+          <input type="number" id="roundStep" min="100" max="500" step="50" value="250">
+          <div class="hint">Many hospitals use 250-mg rounding.</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <small>
+        The maintenance dose is computed as: Daily dose ≈ AUC<sub>target</sub> × CL, where CL (L/h) = 0.17 + 0.06×CrCl (mL/min).
+        Interval (q8/q12/q24) is selected from CL and CrCl bands and then converted to a per-dose amount.
+        This is a population PK approach and does NOT replace Bayesian AUC software or formal TDM.
+      </small>
+    </section>
+
+    <!-- OUTPUT & PK -->
+    <section class="card">
+      <h2>Dose, AUC & safety summary</h2>
+
+      <div class="output-row">
+        <span class="output-label">CrCl category</span>
+        <span class="output-value" id="crclBandOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Loading dose (mg/kg; TBW)</span>
+        <span class="output-value" id="ldPerKgOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Loading dose (mg; rounded)</span>
+        <span class="output-value" id="ldMgOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Maintenance daily dose (mg/day)</span>
+        <span class="output-value" id="mdDailyOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Maintenance regimen</span>
+        <span class="output-value" id="mdRegimenOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Predicted AUC<sub>24</sub> / MIC</span>
+        <span class="output-value" id="aucMicOut">–</span>
+      </div>
+      <div id="aucPill" class="pill" style="display:none;"></div>
+
+      <div class="output-row">
+        <span class="output-label">Global safety / guideline fit</span>
+        <span class="output-value" id="safetyOut">–</span>
+      </div>
+      <div id="safetyPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2 style="margin-top:0.4rem;">PK estimates (population model)</h2>
+      <small>
+        Uses CL = 0.17 + 0.06×CrCl (mL/min) and Vd ≈ 0.7 L/kg (TBW).
+        Values assume approximate steady state with intermittent IV infusion.
+      </small>
+
+      <div class="output-row">
+        <span class="output-label">CL (L/h)</span>
+        <span class="output-value" id="clOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Vd (L)</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke (h⁻¹)</span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">t½ (h)</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted C<sub>max,ss</sub> (end infusion)</span>
+        <span class="output-value" id="cmaxOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted C<sub>min,ss</sub> (trough)</span>
+        <span class="output-value" id="cminOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Text summary</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data and targets, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  This calculator reflects AUC-based vancomycin concepts from the 2020 ASHP/IDSA/PIDS/SIDP guidelines and common PK equations for educational use.
+  </footer>
+
+<script>
+  // ---------- Utility functions ----------
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // ---------- IBW / AdjBW / CrCl ----------
+  function updateWeightsAndCrCl() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") {
+        ibw = 50 + 2.3 * over5ft;
+      } else {
+        ibw = 45.5 + 2.3 * over5ft;
+      }
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else {
+        dw = tbw;
+      }
+    } else if (tbw) {
+      dw = tbw;
+    }
+
+    if (age && sex && scr && dw) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw,1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw,1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl,0) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateWeightsAndCrCl);
+  });
+
+  // ---------- Main computation ----------
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+
+    const infection = document.getElementById("infection").value;
+    const icu = document.getElementById("icu").value;
+    const pregnancy = document.getElementById("pregnancy").value;
+    const dialysis = document.getElementById("dialysis").value;
+    const notes = document.getElementById("notes").value || "None";
+
+    const mic = parseFloat(document.getElementById("mic").value);
+    const aucTarget = parseFloat(document.getElementById("aucTarget").value);
+    const ldMgPerKg = parseFloat(document.getElementById("ldMgPerKg").value);
+    const ldMax = parseFloat(document.getElementById("ldMax").value);
+    const prefInterval = document.getElementById("prefInterval").value;
+    const infusionH = parseFloat(document.getElementById("infusionH").value);
+    const roundStep = parseFloat(document.getElementById("roundStep").value);
+
+    if (!age || !sex || !hCm || !tbw || !scr || !dw || !crcl) {
+      alert("Please complete age, sex, height, total body weight, and serum creatinine so that IBW, dosing weight and CrCl can be calculated.");
+    }
+    if (dialysis === "Yes") {
+      alert("Dialysis patients require dedicated vancomycin protocols; this calculator is not validated for dialysis.");
+    }
+    if (!aucTarget || aucTarget <= 0) {
+      alert("Please provide a valid AUC target (e.g., 400–600).");
+      return;
+    }
+    if (!mic || mic <= 0) {
+      alert("Please provide a valid MIC value (e.g., 1).");
+      return;
+    }
+
+    // ---------- CrCl band ----------
+    let crclBand = "Unknown";
+    if (crcl) {
+      if (crcl >= 90) crclBand = "CrCl ≥90 mL/min (normal / high)";
+      else if (crcl >= 60) crclBand = "CrCl 60–89 mL/min (mild impairment)";
+      else if (crcl >= 30) crclBand = "CrCl 30–59 mL/min (moderate)";
+      else if (crcl >= 15) crclBand = "CrCl 15–29 mL/min (severe)";
+      else crclBand = "CrCl <15 mL/min (very severe – non-dialysis)";
+    }
+    document.getElementById("crclBandOut").textContent = crclBand;
+
+    // ---------- Loading dose ----------
+    let ldPerKg = null, ldMg = null, ldRounded = null;
+    if (tbw && ldMgPerKg) {
+      ldPerKg = ldMgPerKg;
+      ldMg = ldMgPerKg * tbw;
+      if (ldMax && ldMg > ldMax) ldMg = ldMax;
+      if (roundStep && roundStep > 0) {
+        ldRounded = Math.round(ldMg / roundStep) * roundStep;
+      } else {
+        ldRounded = ldMg;
+      }
+    }
+
+    document.getElementById("ldPerKgOut").textContent =
+      ldPerKg ? `${fmt(ldPerKg,1)} mg/kg (TBW)` : "–";
+    document.getElementById("ldMgOut").textContent =
+      ldRounded ? `${fmt(ldRounded,0)} mg (rounded)` : "–";
+
+    // ---------- Clearance & PK ----------
+    let cl = null, vd = null, ke = null, tHalf = null;
+    if (crcl && crcl > 0) {
+      // CL (L/h) = 0.17 + 0.06 * CrCl(mL/min)
+      cl = 0.17 + 0.06 * crcl;
+    }
+    if (tbw) {
+      vd = 0.7 * tbw; // L
+    }
+    if (cl && vd) {
+      ke = cl / vd; // h^-1
+      tHalf = 0.693 / ke;
+    }
+
+    document.getElementById("clOut").textContent = cl ? `${fmt(cl,2)} L/h` : "–";
+    document.getElementById("vdOut").textContent =
+      vd ? `${fmt(vd,1)} L (${fmt(vd / tbw,2)} L/kg)` : "–";
+    document.getElementById("keOut").textContent = ke ? `${fmt(ke,3)} h⁻¹` : "–";
+    document.getElementById("tHalfOut").textContent = tHalf ? `${fmt(tHalf,1)} h` : "–";
+
+    // ---------- Maintenance daily dose from AUC ----------
+    let mdDaily = null;
+    if (cl && aucTarget) {
+      // AUC_24 = Dose_24 / CL  =>  Dose_24 = AUC_target * CL
+      mdDaily = aucTarget * cl; // mg/day
+      // put some reasonable bounds
+      if (mdDaily < 500) mdDaily = 500;
+      if (mdDaily > 6000) mdDaily = 6000;
+    }
+
+    // ---------- Interval selection ----------
+    let tau = null;
+    // basic mapping: high CL -> q8h, normal -> q12h, lower -> q24h
+    if (cl) {
+      if (prefInterval === "Q8") {
+        tau = (cl >= 4 ? 8 : 12);
+      } else if (prefInterval === "Q12") {
+        tau = (cl < 2 ? 24 : 12);
+      } else if (prefInterval === "Q24") {
+        tau = 24;
+      } else {
+        // AUTO
+        if (cl > 6) tau = 8;        // CrCl ~100+
+        else if (cl >= 3) tau = 12; // CrCl ~50–100
+        else tau = 24;              // CrCl < ~50
+      }
+      // protect against very low CrCl
+      if (crcl && crcl < 15) tau = 24;
+    }
+
+    let mdPerDose = null, mdPerDoseRounded = null, perDoseMgPerKg = null;
+    let regimenText = "–";
+    if (mdDaily && tau) {
+      const dosesPerDay = 24 / tau;
+      mdPerDose = mdDaily / dosesPerDay;
+      if (roundStep && roundStep > 0) {
+        mdPerDoseRounded = Math.round(mdPerDose / roundStep) * roundStep;
+      } else {
+        mdPerDoseRounded = mdPerDose;
+      }
+      perDoseMgPerKg = (mdPerDoseRounded && tbw) ? (mdPerDoseRounded / tbw) : null;
+      regimenText = `${fmt(mdPerDoseRounded,0)} mg IV q${tau}h (≈ ${fmt(perDoseMgPerKg,1)} mg/kg per dose)`;
+    }
+
+    document.getElementById("mdDailyOut").textContent =
+      mdDaily ? `${fmt(mdDaily,0)} mg/day (pre-rounding)` : "–";
+    document.getElementById("mdRegimenOut").textContent = regimenText;
+
+    // ---------- AUC achieved & AUC/MIC ----------
+    let aucAchieved = null, aucMic = null;
+    if (cl && mdDaily) {
+      // Achieved AUC_24 (using rounded regimen total daily dose)
+      let totalDailyRounded = null;
+      if (mdPerDoseRounded && tau) {
+        totalDailyRounded = mdPerDoseRounded * (24 / tau);
+      }
+      const dailyUsed = totalDailyRounded || mdDaily;
+      aucAchieved = dailyUsed / cl;   // mg*h/L
+      if (mic) {
+        aucMic = aucAchieved / mic;
+      }
+    }
+
+    let aucStatus = "–";
+    let aucClass = "pill-warn";
+    if (aucAchieved) {
+      if (aucAchieved < 400) {
+        aucStatus = "Below recommended AUC (risk of underexposure)";
+        aucClass = "pill-warn";
+      } else if (aucAchieved > 600) {
+        aucStatus = "Above recommended AUC (higher nephrotoxicity risk)";
+        aucClass = "pill-alert";
+      } else {
+        aucStatus = "Within AUC 400–600 target window";
+        aucClass = "pill-ok";
+      }
+    }
+
+    document.getElementById("aucMicOut").textContent =
+      aucAchieved ? `${fmt(aucAchieved,0)} mg·h/L (AUC); AUC/MIC ≈ ${fmt(aucMic,0)}` : "–";
+
+    const aucPill = document.getElementById("aucPill");
+    aucPill.style.display = "inline-block";
+    aucPill.textContent = aucStatus;
+    aucPill.className = "pill " + aucClass;
+
+    // ---------- Predict peak & trough (approximate steady-state) ----------
+    let cmax = null, cmin = null;
+    if (mdPerDoseRounded && cl && vd && ke && tau && infusionH) {
+      const Dose = mdPerDoseRounded;
+      const R = Dose / infusionH; // mg/h
+      // Css,max at end of infusion (steady-state)
+      const num = (R / (cl)); // mg/L at theoretical plateau
+      const oneMinusExpInf = 1 - Math.exp(-ke * infusionH);
+      const oneMinusExpTau = 1 - Math.exp(-ke * tau);
+      cmax = num * (oneMinusExpInf / oneMinusExpTau);
+      const delta = tau - infusionH;
+      if (delta > 0) {
+        cmin = cmax * Math.exp(-ke * delta);
+      }
+    }
+
+    document.getElementById("cmaxOut").textContent =
+      cmax ? `${fmt(cmax,1)} mg/L` : "–";
+    document.getElementById("cminOut").textContent =
+      cmin ? `${fmt(cmin,1)} mg/L` : "–";
+
+    // ---------- Safety / guideline fit ----------
+    let safetyMsg = "AUC-based regimen; ensure TDM (Bayesian or 2-level AUC) within 24–48 h.";
+    let safetyClass = "pill-ok";
+
+    if (aucAchieved && aucAchieved > 600) {
+      safetyMsg = "Predicted AUC >600 mg·h/L – increased risk of nephrotoxicity; consider lowering dose and monitor SCr daily.";
+      safetyClass = "pill-alert";
+    } else if (aucAchieved && aucAchieved < 400 && infection === "MRSA_SERIOUS") {
+      safetyMsg = "Predicted AUC <400 mg·h/L for serious MRSA – risk of treatment failure; consider dose increase and confirm with levels.";
+      safetyClass = "pill-warn";
+    }
+
+    if (pregnancy === "Yes" || dialysis === "Yes") {
+      safetyMsg = "Pregnancy or dialysis: this tool is not validated; use dedicated vancomycin protocol and expert PK support.";
+      safetyClass = "pill-alert";
+    }
+
+    const safetyPill = document.getElementById("safetyPill");
+    safetyPill.style.display = "inline-block";
+    safetyPill.textContent = (safetyClass === "pill-ok") ? "Reasonable starting regimen" : "High-risk / needs expert review";
+    safetyPill.className = "pill " + safetyClass;
+    document.getElementById("safetyOut").textContent = safetyMsg;
+
+    // ---------- Text summary ----------
+    const summary = [];
+    const infectionText = document.getElementById("infection").options[document.getElementById("infection").selectedIndex].text;
+
+    summary.push("Clinical context:");
+    summary.push(`• Infection: ${infectionText}`);
+    summary.push(`• ICU/critical: ${icu}. Dialysis: ${dialysis}. Pregnancy: ${pregnancy}.`);
+    summary.push("");
+    summary.push("Patient & renal:");
+    summary.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; TBW: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; PK dosing weight: ${fmt(dw,1)} kg.`);
+    summary.push(`• SCr: ${fmt(scr,2)} mg/dL; estimated CrCl (CG): ${fmt(crcl,0)} mL/min (${crclBand}).`);
+    summary.push("");
+    summary.push("Loading dose:");
+    summary.push(`• Chosen factor: ${fmt(ldMgPerKg,1)} mg/kg (TBW), max ${fmt(ldMax,0)} mg.`);
+    summary.push(`• Calculated loading dose: ${fmt(ldRounded,0)} mg (rounded).`);
+    summary.push("");
+    summary.push("Maintenance (population AUC-based estimate):");
+    summary.push(`• PK: CL ≈ ${fmt(cl,2)} L/h; Vd ≈ ${fmt(vd,1)} L (${fmt(vd && tbw ? vd/tbw : null,2)} L/kg); ke ≈ ${fmt(ke,3)} h⁻¹; t½ ≈ ${fmt(tHalf,1)} h.`);
+    summary.push(`• Target AUC₍₂₄₎: ${fmt(aucTarget,0)} mg·h/L with MIC = ${fmt(mic,2)} mg/L.`);
+    summary.push(`• Calculated daily dose: ≈ ${fmt(mdDaily,0)} mg/day (before rounding).`);
+    summary.push(`• Recommended regimen: ${regimenText}.`);
+    summary.push(`• Predicted achieved AUC₍₂₄₎: ≈ ${fmt(aucAchieved,0)} mg·h/L → AUC/MIC ≈ ${fmt(aucMic,0)}.`);
+    summary.push("");
+    summary.push("Approximate steady-state concentrations:");
+    summary.push(`• Cmax,ss (end infusion): ${fmt(cmax,1)} mg/L.`);
+    summary.push(`• Cmin,ss (trough): ${fmt(cmin,1)} mg/L (for information only; AUC, not trough, is the primary target).`);
+    summary.push("");
+    summary.push("Safety / monitoring:");
+    summary.push(`• Safety assessment: ${safetyMsg}`);
+    summary.push("• Obtain vancomycin levels and use AUC-based TDM (Bayesian or paired levels) within 24–48 hours; adjust dosing to maintain AUC 400–600 mg·h/L.");
+    summary.push("• Monitor SCr and nephrotoxins; avoid unnecessary concurrent nephrotoxic drugs where possible.");
+    summary.push("");
+    summary.push("Other notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("This PK-based calculation is a starting estimate only and must be integrated with clinical response, culture/MIC data, and formal TDM according to your institution’s protocol.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("sex").value = "";
+    document.getElementById("infection").value = "MRSA_SERIOUS";
+    document.getElementById("icu").value = "No";
+    document.getElementById("pregnancy").value = "No";
+    document.getElementById("dialysis").value = "No";
+    document.getElementById("notes").value = "";
+    document.getElementById("mic").value = 1;
+    document.getElementById("aucTarget").value = 500;
+    document.getElementById("ldMgPerKg").value = 25;
+    document.getElementById("ldMax").value = 3000;
+    document.getElementById("prefInterval").value = "AUTO";
+    document.getElementById("infusionH").value = 1.5;
+    document.getElementById("roundStep").value = 250;
+    [
+      "crclBandOut","ldPerKgOut","ldMgOut","mdDailyOut","mdRegimenOut",
+      "aucMicOut","safetyOut","clOut","vdOut","keOut","tHalfOut","cmaxOut","cminOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data and targets, then click “Calculate”.";
+    document.getElementById("aucPill").style.display = "none";
+    document.getElementById("safetyPill").style.display = "none";
+  });
+</script>
+</body>
+</html>

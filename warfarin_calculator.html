@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Warfarin Dosing & INR Adjustment Calculator (Adult)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #37474f;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1300px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #37474f;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    @media (max-width: 960px) {
+      .field-row {
+        flex-direction: column;
+      }
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #37474f;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #37474f;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .mode-toggle {
+      display: inline-flex;
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .mode-btn {
+      background: #eceff1;
+      color: #37474f;
+      border-radius: 999px;
+      padding: 0.25rem 0.8rem;
+      font-size: 0.85rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: #37474f;
+      color: #fff;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.1fr) minmax(260px, 1.1fr) minmax(260px, 1.2fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1300px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Warfarin Adult Dosing & INR Adjustment Calculator</h1>
+  <p>Supports initiation and maintenance adjustment using INR and total weekly dose, plus predicted PK (half-life, CL, time to steady state). For educational/app-development use only.</p>
+</header>
+
+<main>
+  <!-- PATIENT CARD -->
+  <section class="card">
+    <h2>Patient baseline data</h2>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Age (years)</label>
+        <input type="number" id="age" min="18" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Sex</label>
+        <select id="sex">
+          <option value="">Select…</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Body weight (kg)</label>
+        <input type="number" id="tbw" min="30" max="200" step="0.1">
+      </div>
+      <div class="field">
+        <label>Height (cm)</label>
+        <input type="number" id="height" min="120" max="220" step="0.5">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Serum creatinine (mg/dL)</label>
+        <input type="number" id="scr" min="0.2" max="10" step="0.01">
+      </div>
+      <div class="field">
+        <label>Estimated CrCl (Cockcroft–Gault) mL/min</label>
+        <input type="text" id="crcl" readonly>
+      </div>
+      <div class="field">
+        <label>IBW (kg)</label>
+        <input type="text" id="ibw" readonly>
+      </div>
+      <div class="field">
+        <label>Dosing weight for CrCl (kg)</label>
+        <input type="text" id="dw" readonly>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Indication</label>
+        <select id="indication">
+          <option value="AF">Atrial fibrillation (non-valvular)</option>
+          <option value="VTE">DVT/PE treatment or secondary prevention</option>
+          <option value="MECH_AV">Mechanical aortic valve</option>
+          <option value="MECH_MV">Mechanical mitral valve / multiple valves</option>
+          <option value="OTHER">Other / custom</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Target INR range</label>
+        <div class="field-row">
+          <input type="number" id="targetLow" min="1.5" max="3.0" step="0.1" placeholder="Low">
+          <input type="number" id="targetHigh" min="2.0" max="4.0" step="0.1" placeholder="High">
+        </div>
+        <div class="hint">Most AF/VTE: 2.0–3.0. Many mechanical valves: 2.5–3.5 (check local guideline).</div>
+      </div>
+      <div class="field">
+        <label>Baseline (current) INR</label>
+        <input type="number" id="baselineInr" min="0.8" max="10" step="0.1">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Liver disease, decompensated HF, or malnutrition?</label>
+        <select id="hepatic">
+          <option value="No">No</option>
+          <option value="Yes">Yes – high sensitivity</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Major interacting drugs (e.g., amiodarone, azoles, TMP/SMX, macrolides)?</label>
+        <select id="interactions">
+          <option value="No">No</option>
+          <option value="Yes">Yes – expect stronger effect</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Genotype / known warfarin sensitivity</label>
+        <select id="genotype">
+          <option value="UNKNOWN">Unknown / not done</option>
+          <option value="NORMAL">Normal sensitivity</option>
+          <option value="HIGH">High sensitivity (e.g., VKORC1 AA or CYP2C9 *2/*3)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Other clinical notes (bleeding risk, thrombosis risk, etc.)</label>
+      <textarea id="notes"></textarea>
+    </div>
+  </section>
+
+  <!-- MODE TOGGLE -->
+  <section class="card">
+    <div class="mode-toggle">
+      <button type="button" id="btnInit" class="mode-btn active">Initiation (warfarin-naïve)</button>
+      <button type="button" id="btnMaint" class="mode-btn">Maintenance dose adjustment</button>
+    </div>
+    <small>
+      Initiation: suggests a starting dose (2–10 mg/day) based on age, comorbidity, interactions and sensitivity, with comments
+      on INR timing. Maintenance: adjusts weekly dose by ~5–20% according to INR and target range.
+    </small>
+  </section>
+
+  <div class="grid">
+    <!-- INITIATION SECTION -->
+    <section class="card" id="initCard">
+      <h2>Initiation module (warfarin-naïve)</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Initiation setting</label>
+          <select id="initSetting">
+            <option value="OUTPATIENT">Stable outpatient</option>
+            <option value="INPATIENT">Hospitalized / high monitoring</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Use aggressive 10 mg × 2 days strategy?</label>
+          <select id="use10mg">
+            <option value="NO">No – standard 5 mg approach</option>
+            <option value="YES">Yes – only if low bleeding risk</option>
+          </select>
+          <div class="hint">Evidence supports 10 mg × 2 days for selected low-risk outpatients with close INR follow-up.</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Estimated bleeding risk (clinical judgement)</label>
+          <select id="bleedRisk">
+            <option value="LOW">Low</option>
+            <option value="MODERATE">Moderate</option>
+            <option value="HIGH">High</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Bridge with parenteral anticoagulant?</label>
+          <select id="bridging">
+            <option value="VTE_YES">Yes – acute VTE treatment</option>
+            <option value="VALVE_YES">Yes – mechanical valve / very high risk</option>
+            <option value="NO">No bridging planned</option>
+          </select>
+          <div class="hint">Bridging strategy depends on indication, risk and guideline – calculator does not dose heparin.</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcInitBtn">Calculate initiation plan</button>
+      </div>
+
+      <hr>
+      <h2>Initiation outputs</h2>
+
+      <div class="output-row">
+        <span class="output-label">Suggested starting daily dose</span>
+        <span class="output-value" id="initDoseOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">First 3–4 days pattern</span>
+        <span class="output-value" id="initPatternOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">INR monitoring recommendation</span>
+        <span class="output-value" id="initInrOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Special safety notes</span>
+        <span class="output-value" id="initSafetyOut">–</span>
+      </div>
+    </section>
+
+    <!-- MAINTENANCE SECTION -->
+    <section class="card" id="maintCard">
+      <h2>Maintenance module (dose adjustment)</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Current total weekly warfarin dose (mg)</label>
+          <input type="number" id="weeklyDose" min="5" max="140" step="0.5">
+          <div class="hint">Sum of the last 7 days’ doses in mg.</div>
+        </div>
+        <div class="field">
+          <label>Latest INR (today)</label>
+          <input type="number" id="currentInr" min="0.8" max="10" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>INR stability</label>
+          <select id="inrStability">
+            <option value="STABLE">Mostly in range</option>
+            <option value="UNSTABLE">Highly variable / recently changed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Missed doses or acute illness in last week?</label>
+          <select id="missed">
+            <option value="No">No</option>
+            <option value="Yes">Yes / unclear adherence</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcMaintBtn">Calculate maintenance adjustment</button>
+      </div>
+
+      <hr>
+      <h2>Maintenance outputs</h2>
+
+      <div class="output-row">
+        <span class="output-label">INR interpretation vs target</span>
+        <span class="output-value" id="inrInterpOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">One-time action (hold / boost)</span>
+        <span class="output-value" id="oneTimeOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Recommended % change in weekly dose</span>
+        <span class="output-value" id="pctChangeOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">New total weekly dose</span>
+        <span class="output-value" id="newWeeklyOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Suggested average daily dose</span>
+        <span class="output-value" id="avgDailyOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Suggested timing for next INR</span>
+        <span class="output-value" id="nextInrOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Maintenance safety flag</span>
+        <span class="output-value" id="maintSafetyOut">–</span>
+      </div>
+      <div id="maintSafetyPill" class="pill" style="display:none;"></div>
+    </section>
+
+    <!-- PK SECTION -->
+    <section class="card">
+      <h2>Warfarin PK predictions (educational)</h2>
+      <small>
+        Uses typical adult PK: Vd ≈ 0.14 L/kg, effective half-life ≈ 36–42 h in normal metabolism, prolonged with hepatic disease,
+        high-sensitivity genotypes and strong interacting drugs. Outputs are population estimates only.
+      </small>
+
+      <div class="output-row">
+        <span class="output-label">Estimated Vd</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Estimated half-life (t½)</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke</span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Clearance (CL ≈ ke × Vd)</span>
+        <span class="output-value" id="clOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Time to ~90% of new steady state</span>
+        <span class="output-value" id="tSteadyOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Overall text summary (for chart / app log)</h2>
+      <div class="summary-text" id="summaryText">
+        Enter baseline data, choose initiation or maintenance mode, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="btn-row">
+      <button type="button" class="secondary" id="resetAllBtn">Reset all</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  This calculator summarizes common warfarin initiation and INR-based adjustment strategies from guideline and anticoagulation
+  clinic protocols. Always individualize therapy based on bleeding/thrombotic risk and actual INR response.
+</footer>
+
+<script>
+  // ---------- Utility ----------
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // ---------- IBW / AdjBW / CrCl ----------
+  function updateDerived() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") ibw = 50 + 2.3 * over5ft;
+      else ibw = 45.5 + 2.3 * over5ft;
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else if (tbw < ibw) {
+        dw = tbw;
+      } else {
+        dw = ibw;
+      }
+    } else if (tbw) dw = tbw;
+
+    if (age && sex && scr && dw) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw,1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw,1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl,0) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", () => {
+      updateDerived();
+      autoTargetInr();
+    });
+  });
+
+  // ---------- Auto target INR from indication ----------
+  function autoTargetInr() {
+    const ind = document.getElementById("indication").value;
+    const lowInput = document.getElementById("targetLow");
+    const highInput = document.getElementById("targetHigh");
+    if (!lowInput.value && !highInput.value) {
+      if (ind === "MECH_MV" || ind === "MECH_AV") {
+        lowInput.value = "2.5";
+        highInput.value = "3.5";
+      } else {
+        lowInput.value = "2.0";
+        highInput.value = "3.0";
+      }
+    }
+  }
+  document.getElementById("indication").addEventListener("change", autoTargetInr);
+  autoTargetInr();
+
+  // ---------- Mode toggle ----------
+  const btnInit = document.getElementById("btnInit");
+  const btnMaint = document.getElementById("btnMaint");
+  const initCard = document.getElementById("initCard");
+  const maintCard = document.getElementById("maintCard");
+
+  btnInit.addEventListener("click", () => {
+    btnInit.classList.add("active");
+    btnMaint.classList.remove("active");
+    initCard.style.opacity = "1";
+    maintCard.style.opacity = "1";
+    // no need to hide; user can use either, but highlight initiation
+  });
+
+  btnMaint.addEventListener("click", () => {
+    btnMaint.classList.add("active");
+    btnInit.classList.remove("active");
+    initCard.style.opacity = "1";
+    maintCard.style.opacity = "1";
+  });
+
+  // ---------- PK calculation (shared) ----------
+  function computePk() {
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const hepatic = document.getElementById("hepatic").value;
+    const interactions = document.getElementById("interactions").value;
+    const genotype = document.getElementById("genotype").value;
+
+    let Vd = null;
+    if (tbw) Vd = 0.14 * tbw; // L
+
+    // Base half-life
+    let tHalf = 40; // hours
+    if (hepatic === "Yes" || genotype === "HIGH" || interactions === "Yes") {
+      tHalf = 50; // prolonged
+    }
+
+    const ke = 0.693 / tHalf;
+    const CL = Vd ? ke * Vd : null;
+    const tSteady = tHalf * 4.5; // ~90% to new steady state
+
+    document.getElementById("vdOut").textContent = Vd ? `${fmt(Vd,2)} L (${fmt(Vd/tbw,3)} L/kg)` : "–";
+    document.getElementById("tHalfOut").textContent = `${fmt(tHalf,1)} h`;
+    document.getElementById("keOut").textContent = ke ? `${fmt(ke,4)} h⁻¹` : "–";
+    document.getElementById("clOut").textContent = CL ? `${fmt(CL,3)} L/h` : "–";
+    document.getElementById("tSteadyOut").textContent = `${fmt(tSteady/24,1)} days (~90% of new steady state)`;
+  }
+
+  // ---------- Initiation logic ----------
+  function computeInitiation() {
+    const age = parseFloat(document.getElementById("age").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const baselineInr = parseFloat(document.getElementById("baselineInr").value);
+    const hepatic = document.getElementById("hepatic").value;
+    const interactions = document.getElementById("interactions").value;
+    const genotype = document.getElementById("genotype").value;
+    const initSetting = document.getElementById("initSetting").value;
+    const use10mg = document.getElementById("use10mg").value;
+    const bleedRisk = document.getElementById("bleedRisk").value;
+    const bridging = document.getElementById("bridging").value;
+    const targetLow = parseFloat(document.getElementById("targetLow").value);
+    const targetHigh = parseFloat(document.getElementById("targetHigh").value);
+    const indication = document.getElementById("indication").value;
+
+    if (!age || !tbw) {
+      alert("Please enter at least age and body weight for initiation.");
+    }
+
+    // Identify high-sensitivity profile
+    const ageHigh = age && age >= 75;
+    const lowWeight = tbw && tbw < 60;
+    const poorKidney = crcl && crcl < 30;
+    const highSensitivity =
+      ageHigh || lowWeight || hepatic === "Yes" ||
+      interactions === "Yes" || genotype === "HIGH" ||
+      poorKidney || bleedRisk === "HIGH";
+
+    let startDose = 5; // mg/day
+    let pattern = "";
+    let safetyNote = "";
+    let inrNote = "";
+
+    if (highSensitivity) {
+      // 2–3 mg/day or less
+      startDose = 2.5;
+      pattern = "Start 2–3 mg once daily; avoid loading. Adjust from day 3–5 based on INR.";
+      safetyNote = "High-sensitivity profile – avoid aggressive loading and monitor INR closely.";
+    } else {
+      // candidate for standard 5 mg, or 10 mg x2 days in selected
+      if (use10mg === "YES" && bleedRisk === "LOW" && (!crcl || crcl >= 50) && !ageHigh) {
+        startDose = 10;
+        pattern =
+          "Day 1–2: 10 mg once daily; Day 3: check INR and adjust to ~5 mg (or per INR). " +
+          "Only if low bleeding risk and close monitoring available.";
+        safetyNote = "10 mg ×2 days strategy – ensure reliable INR check on day 3 and bridging if indicated.";
+      } else {
+        startDose = 5;
+        pattern = "Start 5 mg once daily for days 1–2; check INR on day 3 and adjust.";
+        safetyNote = "Standard 5 mg start – consider lower dose if INR rises rapidly.";
+      }
+    }
+
+    // Baseline INR adjustment
+    if (baselineInr && baselineInr > 1.3) {
+      safetyNote += " Baseline INR >1.3 – consider lower starting dose and more frequent INR checks.";
+    }
+
+    // INR monitoring advice
+    if (initSetting === "OUTPATIENT") {
+      inrNote = "Check INR on day 3–4, then at least every 2–3 days until in range on two consecutive measurements.";
+    } else {
+      inrNote = "Inpatient: check INR daily (or every 24 h) during initiation until stable in target range.";
+    }
+
+    // Bridging note
+    if (bridging !== "NO") {
+      safetyNote += " Continue therapeutic parenteral anticoagulant until INR is in target range for at least 24 hours, per VTE/mechanical-valve guidelines.";
+    }
+
+    // Output
+    document.getElementById("initDoseOut").textContent =
+      `${fmt(startDose,1)} mg once daily (initial suggestion).`;
+    document.getElementById("initPatternOut").textContent = pattern;
+    document.getElementById("initInrOut").textContent =
+      `${inrNote} Time to near steady state of a new dose is ≈5 half-lives (~5–7 days).`;
+    document.getElementById("initSafetyOut").textContent = safetyNote || "–";
+
+    // Update summary later
+  }
+
+  // ---------- Maintenance logic ----------
+  function computeMaintenance() {
+    const weeklyDose = parseFloat(document.getElementById("weeklyDose").value);
+    const currentInr = parseFloat(document.getElementById("currentInr").value);
+    const targetLow = parseFloat(document.getElementById("targetLow").value);
+    const targetHigh = parseFloat(document.getElementById("targetHigh").value);
+    const inrStability = document.getElementById("inrStability").value;
+    const missed = document.getElementById("missed").value;
+
+    if (!weeklyDose || !currentInr || !targetLow || !targetHigh) {
+      alert("For maintenance, please enter weekly dose, current INR, and target INR range.");
+      return;
+    }
+
+    let interp = "";
+    let oneTime = "No specific one-time change; adjust weekly dose only.";
+    let pctChange = 0;
+    let nextInr = "";
+    let safety = "Use standard adjustment; ensure patient counselling and INR follow-up.";
+    let safetyClass = "pill-ok";
+
+    const rangeWidth = targetHigh - targetLow;
+    const within =
+      currentInr >= targetLow && currentInr <= targetHigh;
+
+    if (missed === "Yes") {
+      safety = "Adherence/illness issues – correct underlying problem first, then re-check INR in 3–7 days.";
+      safetyClass = "pill-warn";
+    }
+
+    // Specific algorithms for the common ranges 2.0–3.0 and 2.5–3.5
+    const is23 =
+      Math.abs(targetLow - 2.0) < 0.05 && Math.abs(targetHigh - 3.0) < 0.05;
+    const is2535 =
+      Math.abs(targetLow - 2.5) < 0.05 && Math.abs(targetHigh - 3.5) < 0.05;
+
+    if (is23 || is2535) {
+      // Shift thresholds if 2.5–3.5
+      const shift = is2535 ? 0.5 : 0;
+
+      const tL = 2.0 + shift;
+      const tH = 3.0 + shift;
+
+      if (currentInr < tL - 0.5) {
+        interp = "Markedly subtherapeutic INR.";
+        pctChange = +15;
+        oneTime = "Consider one-time extra dose (≈1.5× usual daily dose) and/or bridging in very high-risk patients.";
+        nextInr = "Re-check INR within 3–7 days.";
+      } else if (currentInr >= tL - 0.5 && currentInr < tL) {
+        interp = "Slightly below target range.";
+        pctChange = +7.5;
+        oneTime = "Optional: give one-time extra half to full daily dose.";
+        nextInr = "Re-check INR in about 1–2 weeks.";
+      } else if (currentInr >= tL && currentInr <= tH) {
+        interp = "Within target range.";
+        pctChange = 0;
+        oneTime = "No one-time change; continue current weekly dose.";
+        nextInr = (inrStability === "STABLE")
+          ? "Re-check INR in 4–12 weeks (per guideline and clinic policy)."
+          : "Re-check INR in 1–4 weeks (recent instability).";
+      } else if (currentInr > tH && currentInr <= tH + 0.5) {
+        interp = "Slightly above target range.";
+        pctChange = -7.5;
+        oneTime = "Consider one-time dose reduction by half or hold 1 small dose.";
+        nextInr = "Re-check INR in 1–2 weeks.";
+      } else if (currentInr > tH + 0.5 && currentInr <= tH + 1.5) {
+        interp = "Moderately supratherapeutic without major bleeding.";
+        pctChange = -15;
+        oneTime = "Hold 1–2 doses, then resume at reduced weekly dose.";
+        nextInr = "Re-check INR within 3–7 days.";
+        safetyClass = "pill-warn";
+        safety = "Moderately high INR – review interacting drugs, diet, adherence, and bleeding signs.";
+      } else if (currentInr > tH + 1.5) {
+        interp = "Markedly supratherapeutic INR – potential overdose.";
+        pctChange = -20;
+        oneTime = "Hold warfarin; consider oral vitamin K and urgent medical review per bleeding protocol.";
+        nextInr = "Re-check INR within 1–2 days and follow local high-INR protocol.";
+        safetyClass = "pill-alert";
+        safety = "Very high INR – manage urgently according to institutional warfarin reversal guideline.";
+      }
+    } else {
+      // Generic approach for unusual target ranges
+      if (within) {
+        interp = "INR within target range.";
+        pctChange = 0;
+        nextInr = "Re-check INR in 2–8 weeks depending on stability.";
+      } else if (currentInr < targetLow) {
+        interp = "INR below target range.";
+        pctChange = +10;
+        nextInr = "Re-check INR in 1–2 weeks.";
+      } else {
+        interp = "INR above target range.";
+        pctChange = -10;
+        nextInr = "Re-check INR in ≤1 week (earlier if substantially high).";
+      }
+    }
+
+    const newWeekly = weeklyDose * (1 + pctChange / 100);
+    const avgDaily = newWeekly / 7;
+
+    document.getElementById("inrInterpOut").textContent = interp || "–";
+    document.getElementById("oneTimeOut").textContent = oneTime;
+    document.getElementById("pctChangeOut").textContent =
+      `${fmt(pctChange,1)} % of total weekly dose`;
+    document.getElementById("newWeeklyOut").textContent =
+      `${fmt(newWeekly,1)} mg/week (from ${fmt(weeklyDose,1)} mg/week)`;
+    document.getElementById("avgDailyOut").textContent =
+      `${fmt(avgDaily,2)} mg/day on average (distribution per clinic protocol).`;
+    document.getElementById("nextInrOut").textContent = nextInr;
+
+    const pill = document.getElementById("maintSafetyPill");
+    pill.style.display = "inline-block";
+    pill.textContent = (safetyClass === "pill-ok") ? "Standard adjustment" : "High-risk / caution";
+    pill.className = "pill " + safetyClass;
+    document.getElementById("maintSafetyOut").textContent = safety;
+  }
+
+  // ---------- Summary text ----------
+  function updateSummary() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const hCm = parseFloat(document.getElementById("height").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+    const indication = document.getElementById("indication").value;
+    const targetLow = parseFloat(document.getElementById("targetLow").value);
+    const targetHigh = parseFloat(document.getElementById("targetHigh").value);
+    const hepatic = document.getElementById("hepatic").value;
+    const interactions = document.getElementById("interactions").value;
+    const genotype = document.getElementById("genotype").value;
+    const notes = document.getElementById("notes").value || "None.";
+
+    const initDose = document.getElementById("initDoseOut").textContent;
+    const initPattern = document.getElementById("initPatternOut").textContent;
+    const initInr = document.getElementById("initInrOut").textContent;
+    const initSafety = document.getElementById("initSafetyOut").textContent;
+
+    const inrInterp = document.getElementById("inrInterpOut").textContent;
+    const oneTime = document.getElementById("oneTimeOut").textContent;
+    const pctChange = document.getElementById("pctChangeOut").textContent;
+    const newWeekly = document.getElementById("newWeeklyOut").textContent;
+    const avgDaily = document.getElementById("avgDailyOut").textContent;
+    const nextInr = document.getElementById("nextInrOut").textContent;
+    const maintSafety = document.getElementById("maintSafetyOut").textContent;
+
+    const tHalfText = document.getElementById("tHalfOut").textContent;
+    const tSteadyText = document.getElementById("tSteadyOut").textContent;
+
+    const indMap = {
+      "AF": "Atrial fibrillation (non-valvular)",
+      "VTE": "DVT/PE treatment or secondary prevention",
+      "MECH_AV": "Mechanical aortic valve",
+      "MECH_MV": "Mechanical mitral / multiple valves",
+      "OTHER": "Other / custom"
+    };
+
+    const summary = [];
+    summary.push("Patient & indication:");
+    summary.push(`• Age ${isNaN(age) ? "n/a" : age + " years"}, sex ${sex || "n/a"}, weight ${fmt(tbw,1)} kg, height ${fmt(hCm,1)} cm.`);
+    summary.push(`• IBW ${fmt(ibw,1)} kg; CrCl dosing weight ${fmt(dw,1)} kg; SCr ${fmt(scr,2)} mg/dL; CrCl ≈ ${fmt(crcl,0)} mL/min.`);
+    summary.push(`• Indication: ${indMap[indication] || "n/a"}; target INR ${fmt(targetLow,1)}–${fmt(targetHigh,1)}.`);
+    summary.push(`• Hepatic risk: ${hepatic}; major interactions: ${interactions}; genotype sensitivity: ${genotype}.`);
+    summary.push("");
+    summary.push("Initiation module (if used):");
+    summary.push(`• Starting dose suggestion: ${initDose}`);
+    summary.push(`• First days pattern: ${initPattern || "not calculated this session."}`);
+    summary.push(`• INR monitoring: ${initInr || "not calculated this session."}`);
+    summary.push(`• Initiation safety notes: ${initSafety || "n/a"}`);
+    summary.push("");
+    summary.push("Maintenance module (if used):");
+    summary.push(`• INR interpretation: ${inrInterp || "not calculated this session."}`);
+    summary.push(`• One-time adjustment: ${oneTime || "n/a"}`);
+    summary.push(`• Weekly dose change: ${pctChange || "n/a"}`);
+    summary.push(`• New weekly dose: ${newWeekly || "n/a"}`);
+    summary.push(`• Average daily dose: ${avgDaily || "n/a"}`);
+    summary.push(`• Next INR: ${nextInr || "n/a"}`);
+    summary.push(`• Maintenance safety: ${maintSafety || "n/a"}`);
+    summary.push("");
+    summary.push("PK notes (population estimates):");
+    summary.push(`• ${tHalfText}, ${tSteadyText}.`);
+    summary.push("• Dose changes generally take several days to be fully reflected in INR.");
+    summary.push("");
+    summary.push("Other notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("This summary is generated by a PK/INR-based calculator for educational use.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  // ---------- Button wiring ----------
+  document.getElementById("calcInitBtn").addEventListener("click", () => {
+    computePk();
+    computeInitiation();
+    updateSummary();
+  });
+
+  document.getElementById("calcMaintBtn").addEventListener("click", () => {
+    computePk();
+    computeMaintenance();
+    updateSummary();
+  });
+
+  document.getElementById("resetAllBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("sex").value = "";
+    document.getElementById("indication").value = "AF";
+    document.getElementById("hepatic").value = "No";
+    document.getElementById("interactions").value = "No";
+    document.getElementById("genotype").value = "UNKNOWN";
+    document.getElementById("initSetting").value = "OUTPATIENT";
+    document.getElementById("use10mg").value = "NO";
+    document.getElementById("bleedRisk").value = "LOW";
+    document.getElementById("bridging").value = "NO";
+    document.getElementById("inrStability").value = "STABLE";
+    document.getElementById("missed").value = "No";
+    document.getElementById("notes").value = "";
+    document.getElementById("targetLow").value = "";
+    document.getElementById("targetHigh").value = "";
+    [
+      "initDoseOut","initPatternOut","initInrOut","initSafetyOut",
+      "inrInterpOut","oneTimeOut","pctChangeOut",
+      "newWeeklyOut","avgDailyOut","nextInrOut","maintSafetyOut",
+      "vdOut","tHalfOut","keOut","clOut","tSteadyOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("maintSafetyPill").style.display = "none";
+    document.getElementById("summaryText").textContent =
+      "Enter baseline data, choose initiation or maintenance mode, then click “Calculate”.";
+  });
+
+  // Initialize
+  autoTargetInr();
+</script>
+</body>
+</html>

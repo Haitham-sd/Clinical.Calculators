@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Extended-Interval Aminoglycoside Calculator (Gentamicin, Tobramycin, Amikacin)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #004d7a;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1250px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.05fr) minmax(260px, 1.05fr) minmax(260px, 1.2fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #004d7a;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #004d7a;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #004d7a;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1250px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Extended-Interval Aminoglycoside Calculator</h1>
+  <p>Gentamicin, Tobramycin, Amikacin – once-daily dosing using IBW/AdjBW, CrCl-based interval & PK model (Hartford-style). Adult, non-pregnant, non-dialysis patients only.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- PATIENT & RENAL CARD -->
+    <section class="card">
+      <h2>Patient data & renal function</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="16" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="120" max="220" step="0.5">
+        </div>
+        <div class="field">
+          <label>Actual body weight (kg)</label>
+          <input type="number" id="tbw" min="30" max="250" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Serum creatinine (mg/dL)</label>
+          <input type="number" id="scr" min="0.2" max="10" step="0.01">
+        </div>
+        <div class="field">
+          <label>Estimated CrCl (Cockcroft–Gault, mL/min)</label>
+          <input type="text" id="crcl" readonly>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>IBW (kg)</label>
+          <input type="text" id="ibw" readonly>
+        </div>
+        <div class="field">
+          <label>Dosing weight (kg)</label>
+          <input type="text" id="dw" readonly>
+          <div class="hint">Uses IBW / AdjBW if TBW &gt;120% IBW.</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">Exclusion / caution for extended-interval</h2>
+      <div class="field">
+        <label>Pregnancy</label>
+        <select id="pregnancy">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Severe burns (&gt;20–30% TBSA), ascites, cystic fibrosis, endocarditis synergy?</label>
+        <select id="specialPop">
+          <option value="No">No significant issues</option>
+          <option value="Yes">Yes – caution / avoid once-daily</option>
+        </select>
+      </div>
+      <div class="hint">
+        Hartford-type extended-interval regimens are typically NOT used if CrCl &lt;30 mL/min, in pregnancy, or in complex PK situations (burns, CF, ascites, synergy).
+      </div>
+    </section>
+
+    <!-- DRUG & REGIMEN CARD -->
+    <section class="card">
+      <h2>Drug, indication & regimen</h2>
+
+      <div class="field">
+        <label>Agent</label>
+        <select id="drug">
+          <option value="GENT">Gentamicin</option>
+          <option value="TOBRA">Tobramycin</option>
+          <option value="AMIK">Amikacin</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Indication (for once-daily strategy)</label>
+        <select id="indication">
+          <option value="SEVERE">Severe Gram-negative sepsis / pneumonia</option>
+          <option value="MODERATE">Moderate infection (e.g., intra-abdominal, complicated UTI)</option>
+          <option value="UNCOMPLICATED_UTI">Uncomplicated UTI</option>
+          <option value="SYNERGY">Gram-positive synergy (e.g., endocarditis) – NOT for once-daily</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Base once-daily dose (mg/kg)</label>
+          <input type="number" id="doseMgPerKg" min="1" max="25" step="0.5">
+          <div class="hint">Defaults from Hartford-style ODA (e.g., Gent/Tobra 7 mg/kg; Amikacin 15–20 mg/kg).</div>
+        </div>
+        <div class="field">
+          <label>Dosing interval (hours, Hartford-style)</label>
+          <input type="text" id="intervalH" readonly>
+          <div class="hint">CrCl ≥60 q24h; 40–59 q36h; 30–39 q48h; &lt;30 → do NOT use extended-interval.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Infusion time (hours)</label>
+        <input type="number" id="infusionH" min="0.25" max="2" step="0.25" value="0.5">
+        <div class="hint">Commonly 30 minutes (0.5 h).</div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <small>Extended-interval dosing must be coupled with therapeutic drug monitoring, usually a single level 6–14 h post-dose using a Hartford-type nomogram.</small>
+    </section>
+
+    <!-- OUTPUT & PK CARD -->
+    <section class="card">
+      <h2>Dose, interval & PK summary</h2>
+
+      <div class="output-row">
+        <span class="output-label">Recommended initial dose (mg/kg)</span>
+        <span class="output-value" id="dosePerKgOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Recommended initial dose (total mg)</span>
+        <span class="output-value" id="doseMgOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Rounding suggestion (vial-friendly)</span>
+        <span class="output-value" id="roundedDoseOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Recommended interval</span>
+        <span class="output-value" id="intervalOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Extended-interval suitability</span>
+        <span class="output-value" id="eiSuitabilityOut">–</span>
+      </div>
+      <div id="eiPill" class="pill" style="display:none;"></div>
+
+      <hr>
+
+      <h2 style="margin-top:0.4rem;">PK estimates (1-compartment, population model)</h2>
+      <small>Used for expected peak/trough estimation. Actual patient PK may differ; TDM is still required.</small>
+
+      <div class="output-row">
+        <span class="output-label">Vd (L)</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke (h⁻¹)</span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">t½ (h)</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted peak (Cmax, end of infusion)</span>
+        <span class="output-value" id="cmaxOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted trough at end of interval</span>
+        <span class="output-value" id="ctroughOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Target peak range (by drug/indication)</span>
+        <span class="output-value" id="targetPeakOut">–</span>
+      </div>
+      <div id="peakPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2>Summary</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data, choose aminoglycoside and indication, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Doses and intervals are based on adult extended-interval aminoglycoside protocols (e.g., Hartford ODA: gentamicin/tobramycin 7 mg/kg, amikacin 15–20 mg/kg
+  with CrCl-based intervals). Extended-interval strategy is not recommended when CrCl &lt;30 mL/min. Always align with institutional nomograms, TDM policies,
+  and local guidelines before clinical use.
+</footer>
+
+<script>
+  // ---- Utility functions ----
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // Compute IBW, AdjBW, dosing weight and CrCl when patient fields change
+  function updateWeightsAndCrCl() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") {
+        ibw = 50 + 2.3 * over5ft;
+      } else {
+        ibw = 45.5 + 2.3 * over5ft;
+      }
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else if (tbw < ibw) {
+        dw = tbw;  // underweight
+      } else {
+        dw = ibw;  // within 100–120% IBW
+      }
+    } else if (tbw) {
+      dw = tbw;
+    }
+
+    if (age && sex && scr && dw) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw, 1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw, 1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl, 0) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateWeightsAndCrCl);
+  });
+
+  // ---- Default mg/kg for each drug & indication ----
+  function getDefaultMgPerKg(drug, indication) {
+    // Gent/Tobra: 7 mg/kg severe/moderate, 5 mg/kg uncomplicated UTI
+    // Amikacin: 15 mg/kg standard, 20 mg/kg severe
+    if (drug === "GENT" || drug === "TOBRA") {
+      if (indication === "UNCOMPLICATED_UTI") return 5;
+      return 7;
+    } else if (drug === "AMIK") {
+      if (indication === "SEVERE") return 20;
+      return 15;
+    }
+    return 7;
+  }
+
+  function refreshBaseDose() {
+    const drug = document.getElementById("drug").value;
+    const indication = document.getElementById("indication").value;
+    const base = getDefaultMgPerKg(drug, indication);
+    document.getElementById("doseMgPerKg").value = base;
+  }
+
+  document.getElementById("drug").addEventListener("change", refreshBaseDose);
+  document.getElementById("indication").addEventListener("change", refreshBaseDose);
+  refreshBaseDose();
+
+  // ---- Main calculation ----
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+
+    const pregnancy = document.getElementById("pregnancy").value;
+    const specialPop = document.getElementById("specialPop").value;
+
+    const drug = document.getElementById("drug").value;
+    const indication = document.getElementById("indication").value;
+    let mgPerKg = parseFloat(document.getElementById("doseMgPerKg").value);
+    const infusionH = parseFloat(document.getElementById("infusionH").value);
+
+    if (!age || !sex || !hCm || !tbw || !scr || !dw || !crcl) {
+      alert("Please complete age, sex, height, weight, serum creatinine so that CrCl and dosing weight can be calculated.");
+    }
+
+    // Safety floor for mg/kg
+    if (!mgPerKg || mgPerKg <= 0) {
+      mgPerKg = getDefaultMgPerKg(drug, indication);
+      document.getElementById("doseMgPerKg").value = mgPerKg;
+    }
+
+    // ---- Hartford-like interval based on CrCl ----
+    let intervalH = null;
+    let intervalText = "–";
+    if (crcl && !isNaN(crcl)) {
+      if (crcl >= 60) {
+        intervalH = 24;
+        intervalText = "Every 24 hours (q24h) – Hartford-style.";
+      } else if (crcl >= 40) {
+        intervalH = 36;
+        intervalText = "Every 36 hours (q36h) – Hartford-style.";
+      } else if (crcl >= 30) {
+        intervalH = 48;
+        intervalText = "Every 48 hours (q48h) – Hartford-style.";
+      } else {
+        intervalH = null;
+        intervalText = "CrCl <30 mL/min: do NOT use extended-interval (Hartford). Avoid aminoglycosides or use conventional dosing with expert PK/TDM.";
+      }
+    }
+    document.getElementById("intervalH").value = intervalH ? intervalH : "";
+
+    // ---- Total dose ----
+    let doseMg = null;
+    if (dw && mgPerKg) {
+      doseMg = mgPerKg * dw;
+    }
+
+    // Rounding (vial-friendly)
+    let roundedDose = null;
+    if (doseMg) {
+      if (drug === "AMIK") {
+        roundedDose = Math.round(doseMg / 50) * 50;
+      } else {
+        roundedDose = Math.round(doseMg / 20) * 20;
+      }
+    }
+
+    // ---- Extended-interval suitability ----
+    let eiSuitability = "Unknown";
+    let eiClass = "pill-warn";
+
+    if (pregnancy === "Yes" || specialPop === "Yes" || (crcl && crcl < 30) || indication === "SYNERGY") {
+      eiSuitability = "Extended-interval ONCE-DAILY NOT recommended – Hartford nomogram excludes CrCl <30 mL/min and special populations; consider conventional q8h with full PK-based TDM.";
+      eiClass = "pill-alert";
+    } else if (crcl && crcl >= 30) {
+      eiSuitability = "Extended-interval strategy acceptable per Hartford-style if local protocol agrees; confirm with TDM and nomogram.";
+      eiClass = "pill-ok";
+    }
+
+    document.getElementById("eiSuitabilityOut").textContent = eiSuitability;
+    const eiPill = document.getElementById("eiPill");
+    eiPill.style.display = "inline-block";
+    eiPill.textContent = (crcl && crcl >= 30) ? "EID acceptable (CrCl ≥30, no exclusions)" : "EID not recommended";
+    eiPill.className = "pill " + eiClass;
+
+    // ---- PK: Vd and ke, t½ ----
+    let vd = null;
+    if (dw) {
+      if (drug === "AMIK") vd = 0.25 * dw;
+      else vd = 0.26 * dw;
+    }
+
+    let ke = null, tHalf = null;
+    if (!isNaN(crcl) && crcl > 0) {
+      ke = 0.00293 * crcl + 0.014; // h^-1
+      tHalf = 0.693 / ke;
+    }
+
+    // ---- Cmax and trough ----
+    let cmax = null, ctrough = null;
+    if (doseMg && vd && ke && infusionH && intervalH) {
+      const R = doseMg / infusionH; // mg/h
+      cmax = (R / (ke * vd)) * (1 - Math.exp(-ke * infusionH));
+      const delta = intervalH - infusionH;
+      if (delta > 0) {
+        ctrough = cmax * Math.exp(-ke * delta);
+      }
+    }
+
+    // ---- Target peak range ----
+    let targetLow = null, targetHigh = null;
+    if (drug === "GENT" || drug === "TOBRA") {
+      if (indication === "SEVERE") { targetLow = 20; targetHigh = 30; }
+      else if (indication === "MODERATE") { targetLow = 15; targetHigh = 25; }
+      else if (indication === "UNCOMPLICATED_UTI") { targetLow = 12; targetHigh = 20; }
+      else { targetLow = 8; targetHigh = 12; }
+    } else if (drug === "AMIK") {
+      if (indication === "SEVERE") { targetLow = 30; targetHigh = 40; }
+      else if (indication === "MODERATE") { targetLow = 25; targetHigh = 35; }
+      else if (indication === "UNCOMPLICATED_UTI") { targetLow = 20; targetHigh = 30; }
+      else { targetLow = 20; targetHigh = 30; }
+    }
+
+    let peakStatus = "–";
+    let peakClass = "pill-warn";
+    if (cmax && targetLow && targetHigh) {
+      if (cmax < targetLow) {
+        peakStatus = "Predicted peak below target";
+        peakClass = "pill-warn";
+      } else if (cmax > targetHigh) {
+        peakStatus = "Predicted peak above target (higher toxicity risk)";
+        peakClass = "pill-alert";
+      } else {
+        peakStatus = "Predicted peak within target range";
+        peakClass = "pill-ok";
+      }
+    }
+
+    const peakPill = document.getElementById("peakPill");
+    peakPill.style.display = "inline-block";
+    peakPill.textContent = peakStatus;
+    peakPill.className = "pill " + peakClass;
+
+    // ---- Output UI ----
+    document.getElementById("dosePerKgOut").textContent =
+      mgPerKg ? `${fmt(mgPerKg, 1)} mg/kg (based on dosing weight)` : "–";
+    document.getElementById("doseMgOut").textContent =
+      doseMg ? `${fmt(doseMg, 0)} mg` : "–";
+    document.getElementById("roundedDoseOut").textContent =
+      roundedDose ? `${fmt(roundedDose, 0)} mg (rounded)` : "–";
+    document.getElementById("intervalOut").textContent = intervalText;
+
+    document.getElementById("vdOut").textContent =
+      vd ? `${fmt(vd, 1)} L (${fmt(vd / dw, 2)} L/kg)` : "–";
+    document.getElementById("keOut").textContent =
+      ke ? `${fmt(ke, 3)} h⁻¹` : "–";
+    document.getElementById("tHalfOut").textContent =
+      tHalf ? `${fmt(tHalf, 1)} h` : "–";
+    document.getElementById("cmaxOut").textContent =
+      cmax ? `${fmt(cmax, 1)} mg/L` : "–";
+    document.getElementById("ctroughOut").textContent =
+      ctrough ? `${fmt(ctrough, 2)} mg/L` : "–";
+    document.getElementById("targetPeakOut").textContent =
+      (targetLow && targetHigh) ? `${fmt(targetLow,0)}–${fmt(targetHigh,0)} mg/L` : "–";
+
+    // ---- Summary ----
+    const summary = [];
+    const drugName = (drug === "GENT") ? "Gentamicin" : (drug === "TOBRA" ? "Tobramycin" : "Amikacin");
+    summary.push(`Drug: ${drugName} – indication: ${document.getElementById("indication").options[document.getElementById("indication").selectedIndex].text}`);
+    summary.push("");
+    summary.push("Patient & renal:");
+    summary.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; TBW: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; dosing weight: ${fmt(dw,1)} kg.`);
+    summary.push(`• SCr: ${fmt(scr,2)} mg/dL; estimated CrCl (CG): ${fmt(crcl,0)} mL/min.`);
+    summary.push("");
+    summary.push("Once-daily dose & interval (Hartford-style bounds):");
+    summary.push(`• Initial mg/kg: ${fmt(mgPerKg,1)} mg/kg → total dose ≈ ${fmt(doseMg,0)} mg (rounded: ${fmt(roundedDose,0)} mg).`);
+    summary.push(`• Recommended interval: ${intervalText}`);
+    summary.push(`• Extended-interval suitability: ${eiSuitability}`);
+    summary.push("");
+    summary.push("PK estimates (population model):");
+    summary.push(`• Vd ≈ ${fmt(vd,1)} L (${fmt(vd && dw ? vd/dw : null,2)} L/kg).`);
+    summary.push(`• ke ≈ ${fmt(ke,3)} h⁻¹; t½ ≈ ${fmt(tHalf,1)} h.`);
+    summary.push(`• Predicted peak (end infusion): ${fmt(cmax,1)} mg/L.`);
+    summary.push(`• Predicted trough at end of interval: ${fmt(ctrough,2)} mg/L.`);
+    summary.push(`• Target peak range: ${targetLow && targetHigh ? fmt(targetLow,0) + "–" + fmt(targetHigh,0) + " mg/L" : "n/a"}; interpretation: ${peakStatus}.`);
+    summary.push("");
+    summary.push("Important caveats:");
+    summary.push("• This is an initial estimate only. Hartford nomogram or other TDM method (random level 6–14 h post-dose) is required.");
+    summary.push("• Extended-interval dosing is NOT recommended when CrCl <30 mL/min, in pregnancy, or in major PK-altering states (burns, CF, ascites, synergy).");
+    summary.push("• Always follow local aminoglycoside guidelines, stewardship policies, and consult clinical pharmacy/ID when needed.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("sex").value = "";
+    document.getElementById("pregnancy").value = "No";
+    document.getElementById("specialPop").value = "No";
+    document.getElementById("drug").value = "GENT";
+    document.getElementById("indication").value = "SEVERE";
+    document.getElementById("infusionH").value = 0.5;
+    refreshBaseDose();
+    [
+      "dosePerKgOut","doseMgOut","roundedDoseOut","intervalOut",
+      "eiSuitabilityOut","vdOut","keOut","tHalfOut",
+      "cmaxOut","ctroughOut","targetPeakOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data, choose aminoglycoside and indication, then click “Calculate”.";
+    document.getElementById("eiPill").style.display = "none";
+    document.getElementById("peakPill").style.display = "none";
+  });
+</script>
+</body>
+</html>

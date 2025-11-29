@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Metformin Dosing, Safety, Titration & PK Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #186a3b;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1200px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.1fr) minmax(260px, 1.1fr) minmax(260px, 1.3fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #186a3b;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #186a3b;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #186a3b;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1200px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Metformin Dosing, Safety, Titration & PK Calculator</h1>
+  <p>Educational / development tool – must be validated and aligned with local guidelines (ADA, KDIGO, product labeling) before clinical use.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- Patient & kidney -->
+    <section class="card">
+      <h2>Patient data & renal function</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="18" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" min="30" max="200" step="0.1">
+        </div>
+        <div class="field">
+          <label>Serum creatinine (mg/dL)</label>
+          <input type="number" id="scr" min="0.3" max="10" step="0.01">
+          <div class="hint">Used for Cockcroft–Gault if eGFR not supplied.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>eGFR (mL/min/1.73 m²)</label>
+        <input type="number" id="egfr" min="5" max="150" step="1">
+        <div class="hint">If blank, app will estimate CrCl via Cockcroft–Gault and treat it as eGFR approximation.</div>
+      </div>
+
+      <div class="field">
+        <label>Metformin formulation</label>
+        <select id="formulation">
+          <option value="IR">Immediate-release (IR)</option>
+          <option value="XR">Extended-release (XR)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Current total daily dose (mg/day)</label>
+          <input type="number" id="currentDose" min="0" max="3000" step="250">
+        </div>
+        <div class="field">
+          <label>Number of daily doses</label>
+          <input type="number" id="currentFreq" min="1" max="3" step="1">
+          <div class="hint">E.g., IR often 2–3 times/day; XR usually once daily.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Risk factors, GI & acute situations -->
+    <section class="card">
+      <h2>Risk factors & acute situations</h2>
+
+      <div class="field">
+        <label>Heart failure (NYHA III–IV or unstable)?</label>
+        <select id="hf">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Chronic liver disease / cirrhosis?</label>
+        <select id="liver">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Heavy alcohol use?</label>
+        <select id="alcohol">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Acute illness with hypoxia/dehydration (sepsis, shock, AKI)?</label>
+        <select id="acuteIll">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Iodinated contrast procedure planned within 48 h?</label>
+        <select id="contrast">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Pregnancy?</label>
+          <select id="pregnancy">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Age ≥80 years?</label>
+          <select id="age80">
+            <option value="Auto">Auto from age</option>
+            <option value="Yes">Force Yes</option>
+            <option value="No">Force No</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">GI tolerability & titration context</h2>
+      <div class="field">
+        <label>GI tolerability at current dose</label>
+        <select id="gi">
+          <option value="None">No symptoms</option>
+          <option value="Mild">Mild/transient (manageable)</option>
+          <option value="Moderate">Moderate/persistent</option>
+          <option value="Severe">Severe/intolerable</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Time at current dose (weeks)</label>
+        <input type="number" id="weeks" min="0" max="52" step="1">
+        <div class="hint">Used to judge whether it is reasonable to up-titrate (usually after ≥1–2 weeks at each step).</div>
+      </div>
+
+      <div class="field">
+        <label>Other notes (DKA history, GI intolerance details, B12 deficiency, etc.)</label>
+        <textarea id="notes" placeholder="Optional free text for risk, GI tolerance and tolerability notes."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+      <small>Risk factors and GI tolerance are used to generate titration and lactic acidosis advice, not absolute contraindications. Always follow local policies.</small>
+    </section>
+
+    <!-- Dose + titration + PK outputs -->
+    <section class="card">
+      <h2>Recommended dosing & lactic acidosis risk</h2>
+
+      <div class="output-row">
+        <span class="output-label">Renal function band (ADA/KDIGO-style)</span>
+        <span class="output-value" id="renalBandOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Max recommended total daily dose</span>
+        <span class="output-value" id="maxDoseOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Suggested starting / adjusted dose</span>
+        <span class="output-value" id="suggestedDoseOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Contrast / acute illness advice</span>
+        <span class="output-value" id="holdAdviceOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Overall lactic acidosis risk band</span>
+        <span class="output-value" id="lacRiskBandOut">–</span>
+      </div>
+
+      <div id="lacRiskPill" class="pill" style="display:none;"></div>
+
+      <hr>
+
+      <h2 style="margin-top:0.4rem;">Titration & GI tolerability</h2>
+
+      <div class="output-row">
+        <span class="output-label">GI tolerability band</span>
+        <span class="output-value" id="giBandOut">–</span>
+      </div>
+      <div id="giPill" class="pill" style="display:none;"></div>
+
+      <div class="output-row">
+        <span class="output-label">Titration suggestion (next step)</span>
+        <span class="output-value" id="titrationOut">–</span>
+      </div>
+
+      <div class="hint">
+        Standard IR titration: start 500 mg once daily, increase by 500 mg/day every 1–2 weeks as tolerated (e.g., 500 mg OD → 500 mg BID → 1000 mg AM + 500 mg PM → 1000 mg BID), not exceeding renal-band max dose. XR is usually started at 500–1000 mg once daily with evening meal.
+      </div>
+
+      <hr>
+
+      <h2 style="margin-top:0.4rem;">PK estimates (population model)</h2>
+      <small>Adult immediate-release dosing; based on published CL, Vd and half-life ranges in normal and impaired renal function.</small>
+      <div class="output-row">
+        <span class="output-label">Estimated CL</span>
+        <span class="output-value" id="clOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Estimated Vd</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">k<sub>e</sub></span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">t½</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">AUC (per 24 h at recommended max dose)</span>
+        <span class="output-value" id="aucOut">–</span>
+      </div>
+      <div class="hint">
+        Model assumptions: CL_norm ≈ 600 mL/min (~36 L/h) at eGFR ≥90; Vd ≈ 3 L/kg; CL scales linearly with eGFR down to 15 mL/min; t½ ≈ 4–8 h.
+      </div>
+
+      <hr>
+      <h2>Summary</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data and risk factors, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Metformin is renally eliminated, with recommendations to avoid initiation if eGFR &lt;45 mL/min/1.73 m² and to discontinue below 30 mL/min in most
+  modern labeling and ADA/KDIGO guidance. Doses here are typical adult IR/XR maxima by eGFR band; always check specific product, country labels and
+  institutional policy before applying in practice.
+</footer>
+
+<script>
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // Splitting helper for titration text
+  function splitDoseText(total, formulation) {
+    if (!total || total <= 0) return "";
+    const t = Math.round(total / 250) * 250; // round to 250 mg
+    if (formulation === "XR") {
+      if (t <= 1000) {
+        return `${t} mg once daily with the evening meal (XR).`;
+      } else {
+        const split = Math.round(t / 2 / 250) * 250;
+        return `${t} mg/day e.g. ${split} mg twice daily (XR or IR per availability).`;
+      }
+    } else {
+      // IR
+      if (t <= 500) {
+        return "500 mg once daily with food.";
+      } else if (t <= 1000) {
+        return "500 mg twice daily (breakfast & evening meal).";
+      } else if (t <= 1500) {
+        return "500 mg three times daily with meals (e.g., breakfast, lunch, dinner).";
+      } else {
+        return `${t} mg/day, e.g. 850 mg twice daily with meals.`;
+      }
+    }
+  }
+
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const wt = parseFloat(document.getElementById("weight").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    let egfr = parseFloat(document.getElementById("egfr").value);
+    const formulation = document.getElementById("formulation").value;
+    const currentDose = parseFloat(document.getElementById("currentDose").value);
+    const currentFreq = parseFloat(document.getElementById("currentFreq").value);
+
+    const hf = document.getElementById("hf").value;
+    const liver = document.getElementById("liver").value;
+    const alcohol = document.getElementById("alcohol").value;
+    const acuteIll = document.getElementById("acuteIll").value;
+    const contrast = document.getElementById("contrast").value;
+    const pregnancy = document.getElementById("pregnancy").value;
+    const age80Override = document.getElementById("age80").value;
+
+    const gi = document.getElementById("gi").value;
+    const weeks = parseFloat(document.getElementById("weeks").value);
+
+    const notes = document.getElementById("notes").value || "None";
+
+    if (!age || !sex || !wt) {
+      alert("Please enter at least age, sex and weight.");
+    }
+
+    // If eGFR missing but SCr present, approximate CrCl via CG and use as eGFR
+    if ((isNaN(egfr) || !egfr) && !isNaN(scr) && scr > 0) {
+      let crclMale = ((140 - age) * wt) / (72 * scr);
+      if (sex === "F") crclMale *= 0.85;
+      egfr = crclMale; // approximate
+    }
+
+    // ----------------------------
+    // 1) eGFR band & max dose logic
+    // ----------------------------
+    let renalBand = "Unknown";
+    let maxDose = null;           // mg/day
+    let suggestedDose = null;     // mg/day
+    let suggestedFreq = null;     // doses per day
+    let commentDose = "";
+
+    if (egfr && !isNaN(egfr)) {
+      if (egfr >= 60) {
+        renalBand = "eGFR ≥60 mL/min/1.73 m²";
+        maxDose = (formulation === "XR") ? 2000 : 2550;
+        suggestedDose = (formulation === "XR") ? 2000 : 2000;
+        suggestedFreq = (formulation === "XR") ? 1 : 2;
+        commentDose = "Full dose range acceptable; monitor renal function at least annually.";
+      } else if (egfr >= 45) {
+        renalBand = "eGFR 45–59 mL/min/1.73 m²";
+        maxDose = 2000;
+        suggestedDose = 1000;     // conservative start
+        suggestedFreq = (formulation === "XR") ? 1 : 2;
+        commentDose = "Metformin can be continued/initiated with caution; monitor renal function every 3–6 months.";
+      } else if (egfr >= 30) {
+        renalBand = "eGFR 30–44 mL/min/1.73 m²";
+        maxDose = 1000;
+        suggestedDose = 500;
+        suggestedFreq = (formulation === "XR") ? 1 : 2;
+        commentDose = "Do not initiate in metformin-naïve; if already on metformin, reduce to ≤1000 mg/day and monitor closely.";
+      } else {
+        renalBand = "eGFR <30 mL/min/1.73 m²";
+        maxDose = 0;
+        suggestedDose = 0;
+        suggestedFreq = 0;
+        commentDose = "Metformin generally contraindicated; discontinue and use alternative agents.";
+      }
+    }
+
+    // ----------------------------
+    // 2) Contrast / acute illness advice
+    // ----------------------------
+    let holdAdvice = "No specific temporary hold indicated based on contrast/acute illness fields.";
+    if (contrast === "Yes") {
+      if (egfr < 60) {
+        holdAdvice = "Hold metformin at or before contrast administration and for 48 h after; restart only once renal function is stable.";
+      } else {
+        holdAdvice = "Consider holding metformin at time of contrast and reassessing renal function if additional risk factors exist.";
+      }
+    }
+    if (acuteIll === "Yes") {
+      holdAdvice = "Temporarily withhold metformin during acute illness with hypoxia, sepsis, dehydration or AKI; restart once stable.";
+    }
+
+    // ----------------------------
+    // 3) Lactic acidosis risk scoring
+    // ----------------------------
+    let riskScore = 0;
+    if (egfr && egfr < 30) riskScore += 3;
+    else if (egfr && egfr < 45) riskScore += 1;
+
+    if (hf === "Yes") riskScore += 2;
+    if (liver === "Yes") riskScore += 2;
+    if (alcohol === "Yes") riskScore += 1;
+    if (acuteIll === "Yes") riskScore += 3;
+    if (contrast === "Yes" && egfr < 60) riskScore += 1;
+    if (pregnancy === "Yes") riskScore += 1;
+
+    let is80 = false;
+    if (age80Override === "Yes") {
+      is80 = true;
+    } else if (age80Override === "Auto") {
+      if (age >= 80) is80 = true;
+    }
+    if (is80) riskScore += 1;
+
+    let lacBand = "Low";
+    let lacPillClass = "pill-ok";
+    let lacComment = "Overall lactic acidosis risk appears low with appropriate dosing and renal monitoring.";
+
+    if (riskScore >= 5) {
+      lacBand = "High";
+      lacPillClass = "pill-alert";
+      lacComment = "High risk for metformin-associated lactic acidosis. Consider alternative therapy, strict dose limitation, and/or temporary discontinuation.";
+    } else if (riskScore >= 3) {
+      lacBand = "Moderate";
+      lacPillClass = "pill-warn";
+      lacComment = "Moderate risk; use lowest effective dose, monitor renal function more frequently, and counsel patient regarding sick-day rules.";
+    }
+
+    // ----------------------------
+    // 4) PK model
+    // ----------------------------
+    let cl = null, vd = null, ke = null, tHalf = null, auc = null;
+
+    if (egfr && !isNaN(egfr) && wt && !isNaN(wt)) {
+      let egfrEff = Math.max(15, Math.min(120, egfr));
+      cl = 36 * (egfrEff / 90);   // L/h
+
+      vd = 3 * wt;                // L
+
+      if (cl && vd) {
+        ke = cl / vd;
+        tHalf = 0.693 / ke;
+      }
+
+      if (maxDose && maxDose > 0 && cl) {
+        auc = maxDose / cl;       // mg·h/L approximate
+      }
+    }
+
+    // ----------------------------
+    // 5) GI tolerability band & titration suggestion
+    // ----------------------------
+    let giBand = "Good";
+    let giPillClass = "pill-ok";
+    let giComment = "";
+
+    if (gi === "None") {
+      giBand = "Good";
+      giPillClass = "pill-ok";
+      giComment = "No GI symptoms reported at current dose.";
+    } else if (gi === "Mild") {
+      giBand = "Acceptable";
+      giPillClass = "pill-warn";
+      giComment = "Mild/transient GI symptoms; often manageable with food and slower titration.";
+    } else if (gi === "Moderate") {
+      giBand = "Borderline";
+      giPillClass = "pill-warn";
+      giComment = "Moderate persistent GI symptoms; avoid up-titration, consider dose reduction or XR formulation.";
+    } else if (gi === "Severe") {
+      giBand = "Poor";
+      giPillClass = "pill-alert";
+      giComment = "Severe/intolerable GI symptoms; consider dose reduction, switch to XR or discontinuation.";
+    }
+
+    let titrationText = "Not applicable.";
+
+    // Conditions where titration is generally not advised
+    if (!egfr || isNaN(egfr) || maxDose === null) {
+      titrationText = "Insufficient renal data for titration planning.";
+    } else if (maxDose === 0) {
+      titrationText = "Metformin is contraindicated at this renal function – do not initiate or up-titrate.";
+    } else {
+      const cur = isNaN(currentDose) ? 0 : currentDose;
+      const wks = isNaN(weeks) ? 0 : weeks;
+
+      if (cur <= 0) {
+        // Initiation
+        if (egfr >= 45) {
+          if (formulation === "XR") {
+            titrationText = "Initiation: 500–1000 mg XR once daily with the evening meal. After ≥1–2 weeks, if GI tolerance is acceptable and renal function stable, increase by 500–1000 mg/day up to the renal-band maximum.";
+          } else {
+            titrationText = "Initiation: 500 mg IR once daily with food (preferably evening). After ≥1–2 weeks, if tolerated, increase to 500 mg twice daily, then 1000 mg morning + 500 mg evening, then 1000 mg twice daily as needed, not exceeding the renal-band maximum.";
+          }
+        } else if (egfr >= 30) {
+          titrationText = "At eGFR 30–44, do not initiate metformin in most patients. If benefits clearly outweigh risks and local policy permits, consider 500 mg once daily with careful monitoring, not exceeding 1000 mg/day.";
+        } else {
+          titrationText = "Metformin initiation not recommended at eGFR <30 mL/min/1.73 m².";
+        }
+      } else {
+        // Already on metformin
+        if (gi === "Severe") {
+          const stepDown = Math.max(0, cur - 500);
+          titrationText = `Severe GI intolerance: consider reducing total daily dose (e.g., from ${fmt(cur,0)} mg/day to about ${fmt(stepDown,0)} mg/day), switch to XR if not already, ensure dosing with meals, or discontinue if symptoms persist.`;
+        } else if (gi === "Moderate") {
+          const stepDown = Math.max(0, cur - 500);
+          titrationText = `Moderate persistent GI symptoms: avoid up-titration; consider maintaining current dose or reducing by ~500 mg/day to about ${fmt(stepDown,0)} mg/day, and/or switching to XR formulation.`;
+        } else {
+          // GI none or mild – may consider up-titration if room vs maxDose
+          if (cur >= maxDose) {
+            titrationText = `Current dose (${fmt(cur,0)} mg/day) is at or above the recommended maximum for this renal band (${fmt(maxDose,0)} mg/day). Do not up-titrate; consider down-titration if GI or risk issues.`;
+          } else {
+            // Only up-titrate if at least 1 week on this step
+            if (wks < 1) {
+              titrationText = `Current dose ${fmt(cur,0)} mg/day is below the renal-band maximum. Maintain this dose for at least 1–2 weeks before considering an increase.`;
+            } else {
+              let nextTotal = cur + 500;
+              if (nextTotal > maxDose) nextTotal = maxDose;
+              const split = splitDoseText(nextTotal, formulation);
+              titrationText = `If GI tolerance is acceptable and renal function stable, you may up-titrate from ${fmt(cur,0)} mg/day to about ${fmt(nextTotal,0)} mg/day. Suggested regimen: ${split}`;
+            }
+          }
+        }
+      }
+    }
+
+    // ----------------------------
+    // 6) Update UI
+    // ----------------------------
+    document.getElementById("renalBandOut").textContent = renalBand;
+    document.getElementById("maxDoseOut").textContent =
+      maxDose != null ? (maxDose === 0 ? "0 mg/day (avoid)" : `${fmt(maxDose,0)} mg/day`) : "–";
+
+    let suggestedText = "–";
+    if (suggestedDose != null) {
+      if (suggestedDose === 0) {
+        suggestedText = "Avoid metformin / discontinue.";
+      } else {
+        const perDose = suggestedFreq && suggestedFreq > 0 ? suggestedDose / suggestedFreq : suggestedDose;
+        suggestedText = `${fmt(suggestedDose,0)} mg/day (≈ ${fmt(perDose,0)} mg × ${suggestedFreq} daily)`;
+      }
+    }
+    document.getElementById("suggestedDoseOut").textContent = suggestedText;
+    document.getElementById("holdAdviceOut").textContent = holdAdvice;
+    document.getElementById("lacRiskBandOut").textContent = lacBand;
+
+    const lacPill = document.getElementById("lacRiskPill");
+    lacPill.style.display = "inline-block";
+    lacPill.textContent = "Lactic acidosis risk: " + lacBand;
+    lacPill.className = "pill " + lacPillClass;
+
+    document.getElementById("clOut").textContent =
+      cl ? `${fmt(cl,1)} L/h` : "–";
+    document.getElementById("vdOut").textContent =
+      vd ? `${fmt(vd,1)} L` : "–";
+    document.getElementById("keOut").textContent =
+      ke ? `${fmt(ke,3)} 1/h` : "–";
+    document.getElementById("tHalfOut").textContent =
+      tHalf ? `${fmt(tHalf,1)} h` : "–";
+    document.getElementById("aucOut").textContent =
+      auc ? `${fmt(auc,1)} mg·h/L` : "–";
+
+    // GI outputs
+    document.getElementById("giBandOut").textContent = giBand;
+    const giPill = document.getElementById("giPill");
+    giPill.style.display = "inline-block";
+    giPill.textContent = "GI tolerance: " + giBand;
+    giPill.className = "pill " + giPillClass;
+    document.getElementById("titrationOut").textContent = titrationText;
+
+    // ----------------------------
+    // 7) Summary text
+    // ----------------------------
+    const summary = [];
+    summary.push("Renal function & band:");
+    summary.push(`• eGFR (or CG CrCl approximation): ${fmt(egfr,0)} mL/min/1.73 m².`);
+    summary.push(`• Band: ${renalBand}.`);
+    summary.push("");
+    summary.push("Dosing recommendation (adult):");
+    summary.push(`• Formulation: ${formulation === "XR" ? "XR" : "IR"}; max recommended daily dose for this band: ${fmt(maxDose,0)} mg/day.`);
+    summary.push(`• Suggested initial/adjusted dose: ${suggestedText}.`);
+    summary.push(`• Current regimen: ${fmt(currentDose,0)} mg/day`
+      + (currentFreq ? ` in ${currentFreq} doses.` : "."));
+    summary.push(`• Comment: ${commentDose}`);
+    summary.push("");
+    summary.push("Contrast / acute illness:");
+    summary.push(`• Advice: ${holdAdvice}`);
+    summary.push("");
+    summary.push("Lactic acidosis risk:");
+    summary.push(`• Qualitative band: ${lacBand} (score ${riskScore}).`);
+    summary.push(`• Interpretation: ${lacComment}`);
+    summary.push("");
+    summary.push("GI tolerability & titration:");
+    summary.push(`• GI band: ${giBand}. ${giComment}`);
+    summary.push(`• Time at current dose: ${isNaN(weeks) ? "n/a" : weeks + " week(s)"}.`);
+    summary.push(`• Titration suggestion: ${titrationText}`);
+    summary.push("");
+    summary.push("PK estimates (population model):");
+    summary.push(`• CL ≈ ${fmt(cl,1)} L/h; Vd ≈ ${fmt(vd,1)} L; ke ≈ ${fmt(ke,3)} 1/h; t½ ≈ ${fmt(tHalf,1)} h.`);
+    summary.push(`• AUC₍₂₄₎ at max recommended daily dose ≈ ${fmt(auc,1)} mg·h/L (approximation).`);
+    summary.push("");
+    summary.push("Additional notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("This tool does not replace individual clinical judgement or local guidelines. "
+      + "PK values are approximate population estimates and not suitable for individual therapeutic drug monitoring, "
+      + "and titration suggestions must be adapted to patient-specific tolerability and institution protocols.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("formulation").value = "IR";
+    ["hf","liver","alcohol","acuteIll","contrast","pregnancy"].forEach(id => {
+      document.getElementById(id).value = "No";
+    });
+    document.getElementById("gi").value = "None";
+    document.getElementById("age80").value = "Auto";
+    document.getElementById("notes").value = "";
+    [
+      "renalBandOut","maxDoseOut","suggestedDoseOut","holdAdviceOut",
+      "lacRiskBandOut","clOut","vdOut","keOut","tHalfOut","aucOut",
+      "giBandOut","titrationOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data and risk factors, then click “Calculate”.";
+    document.getElementById("lacRiskPill").style.display = "none";
+    document.getElementById("giPill").style.display = "none";
+  });
+</script>
+</body>
+</html>

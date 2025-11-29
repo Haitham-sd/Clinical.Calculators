@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Methotrexate Adult Dosing Calculator (Low-Dose Weekly & High-Dose Oncology)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #00695c;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1250px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #00695c;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #00695c;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #00695c;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1250px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.05fr) minmax(260px, 1.3fr);
+      gap: 1rem;
+    }
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .mode-toggle {
+      display: inline-flex;
+      gap: 0.5rem;
+      margin: 0.5rem 0 1rem;
+    }
+    .mode-btn {
+      background: #e0f2f1;
+      color: #00695c;
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.85rem;
+      border: 1px solid transparent;
+    }
+    .mode-btn.active {
+      background: #00695c;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Methotrexate Adult Dosing Calculator</h1>
+  <p>Includes low-dose weekly rheumatology/dermatology regimens and a separate high-dose oncology section with predicted PK parameters. Educational use only.</p>
+</header>
+
+<main>
+  <!-- SHARED PATIENT CARD -->
+  <section class="card" id="patientCard">
+    <h2>Patient data & renal / hepatic function (shared for both sections)</h2>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Age (years)</label>
+        <input type="number" id="age" min="18" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Sex</label>
+        <select id="sex">
+          <option value="">Select…</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Height (cm)</label>
+        <input type="number" id="height" min="120" max="220" step="0.5">
+      </div>
+      <div class="field">
+        <label>Actual body weight (kg)</label>
+        <input type="number" id="tbw" min="30" max="250" step="0.1">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Serum creatinine (mg/dL)</label>
+        <input type="number" id="scr" min="0.2" max="10" step="0.01">
+      </div>
+      <div class="field">
+        <label>Estimated CrCl (Cockcroft–Gault, mL/min)</label>
+        <input type="text" id="crcl" readonly>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>IBW (kg)</label>
+        <input type="text" id="ibw" readonly>
+      </div>
+      <div class="field">
+        <label>Dosing weight for CrCl (kg)</label>
+        <input type="text" id="dw" readonly>
+        <div class="hint">AdjBW if TBW &gt;120% IBW; otherwise TBW.</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>BSA (Mosteller, m²)</label>
+        <input type="text" id="bsa" readonly>
+        <div class="hint">Used for high-dose oncology regimens (mg/m²).</div>
+      </div>
+      <div class="field">
+        <label>Hepatic disease / significant alcohol use?</label>
+        <select id="liverRisk">
+          <option value="No">No major risk</option>
+          <option value="Yes">Yes – high hepatotoxicity risk</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Pregnancy / breastfeeding</label>
+        <select id="pregnancy">
+          <option value="No">No</option>
+          <option value="Yes">Yes – MTX contraindicated</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Other major risk factors (e.g., severe lung disease, cytopenias, uncontrolled infection)</label>
+        <textarea id="notes"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE TOGGLE -->
+  <div class="mode-toggle">
+    <button type="button" id="btnLowMode" class="mode-btn active">Low-dose weekly (RA/PsA/Psoriasis)</button>
+    <button type="button" id="btnHighMode" class="mode-btn">High-dose oncology (IV, PK estimates)</button>
+  </div>
+
+  <!-- LOW-DOSE WEEKLY SECTION -->
+  <div id="lowDoseSection" class="grid">
+    <!-- Low-dose regimen card -->
+    <section class="card">
+      <h2>Low-dose weekly MTX – indication, regimen & folate</h2>
+
+      <div class="field">
+        <label>Indication (low-dose weekly)</label>
+        <select id="indication">
+          <option value="RA">Rheumatoid arthritis</option>
+          <option value="PsA">Psoriatic arthritis</option>
+          <option value="PSO">Psoriasis</option>
+          <option value="OTHER">Other autoimmune / custom</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Disease activity / urgency</label>
+          <select id="severity">
+            <option value="LOW">Low–moderate</option>
+            <option value="HIGH">High activity / rapid control desired</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Previous csDMARD exposure</label>
+          <select id="priorDmard">
+            <option value="NAIVE">MTX-naïve</option>
+            <option value="ESCALATING">On MTX but suboptimal</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Route / formulation (low-dose)</label>
+        <select id="route">
+          <option value="PO">Oral tablets</option>
+          <option value="SC">Subcutaneous injection</option>
+        </select>
+        <div class="hint">Oral is standard up to ~15 mg/week; SC if poor response or intolerance at higher doses.</div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Starting weekly dose (mg) – override if needed</label>
+          <input type="number" id="startDose" min="5" max="30" step="2.5">
+          <div class="hint">Typical start 7.5–15 mg once weekly.</div>
+        </div>
+        <div class="field">
+          <label>Planned target weekly dose (mg)</label>
+          <input type="number" id="targetDose" min="7.5" max="30" step="2.5">
+          <div class="hint">Usual max 20–25 mg/week (occasionally 30 mg/week).</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Dose escalation step (mg)</label>
+          <input type="number" id="stepDose" min="2.5" max="7.5" step="2.5" value="2.5">
+          <div class="hint">Common: +2.5–5 mg every 2–4 weeks.</div>
+        </div>
+        <div class="field">
+          <label>Escalation interval (weeks)</label>
+          <input type="number" id="stepInterval" min="1" max="8" step="1" value="2">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Folic acid supplementation strategy</label>
+        <select id="folateStrategy">
+          <option value="WEEKLY">5–10 mg once weekly (day after MTX)</option>
+          <option value="DAILY">1 mg daily except on MTX day</option>
+          <option value="CUSTOM">Custom documented regimen</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Custom folate note (optional)</label>
+        <textarea id="folateNote"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcLowBtn">Calculate low-dose plan</button>
+        <button type="button" class="secondary" id="resetLowBtn">Reset low-dose</button>
+      </div>
+
+      <small>
+        Once-weekly methotrexate only (never daily). Calculator applies renal-based reductions and age/liver risk flags using adult guideline ranges.
+        Always confirm against national and local guidelines.
+      </small>
+    </section>
+
+    <!-- Low-dose output card -->
+    <section class="card">
+      <h2>Low-dose weekly MTX – dose, adjustment & safety</h2>
+
+      <div class="output-row">
+        <span class="output-label">CrCl category</span>
+        <span class="output-value" id="crclBandOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Renal dosing recommendation</span>
+        <span class="output-value" id="renalAdviceOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Recommended starting weekly dose</span>
+        <span class="output-value" id="startDoseOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Recommended target / maximum weekly dose</span>
+        <span class="output-value" id="targetDoseOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Escalation plan</span>
+        <span class="output-value" id="titrationOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Folic acid recommendation</span>
+        <span class="output-value" id="folateOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Once-weekly safety reminder</span>
+        <span class="output-value" id="weeklyOut">Methotrexate must be taken ONCE WEEKLY, never daily.</span>
+      </div>
+      <div id="weeklyPill" class="pill pill-alert">Fatal if taken daily – ensure weekly schedule.</div>
+
+      <hr>
+      <h2 style="margin-top:0.4rem;">Low-dose risk classification</h2>
+
+      <div class="output-row">
+        <span class="output-label">Global safety flag</span>
+        <span class="output-value" id="safetyOut">–</span>
+      </div>
+      <div id="safetyPill" class="pill" style="display:none;"></div>
+
+      <div class="output-row">
+        <span class="output-label">Monitoring summary</span>
+        <span class="output-value" id="monitorOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Low-dose text summary (for chart / app log)</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data, indication and weekly plan, then click “Calculate low-dose plan”.
+      </div>
+    </section>
+  </div>
+
+  <!-- HIGH-DOSE ONCOLOGY SECTION -->
+  <div id="highDoseSection" class="grid" style="display:none;">
+    <!-- High-dose regimen card -->
+    <section class="card">
+      <h2>High-dose methotrexate (HD-MTX) – oncology regimen</h2>
+
+      <div class="field">
+        <label>Oncology indication (HD-MTX)</label>
+        <select id="hdIndication">
+          <option value="OSTEOSARCOMA">Osteosarcoma (e.g., 10–12 g/m² IV)</option>
+          <option value="CNS_PROPHYLAXIS">CNS prophylaxis (e.g., 1–3.5 g/m² IV)</option>
+          <option value="ALL_CONSOLIDATION">ALL consolidation/maintenance (e.g., 1–5 g/m² IV)</option>
+          <option value="LYMPHOMA_CNS">Primary/secondary CNS lymphoma (e.g., 3–8 g/m² IV)</option>
+          <option value="OTHER">Other / custom HD-MTX regimen</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Planned HD-MTX dose (g/m²)</label>
+          <input type="number" id="hdDoseGm2" min="0.5" max="15" step="0.1">
+          <div class="hint">Typical HD ranges: 1–12 g/m² depending on protocol.</div>
+        </div>
+        <div class="field">
+          <label>Infusion duration (hours)</label>
+          <input type="number" id="hdInfusionH" min="0.5" max="36" step="0.5" value="4">
+          <div class="hint">Many regimens: 4–24 h infusions; follow protocol.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Hydration / urine alkalinization / leucovorin rescue</label>
+        <textarea id="hdSupportNote" readonly>
+High-dose methotrexate MUST be given only with:
+• Intensive IV hydration and urine alkalinization (e.g., urine pH ≥7, per local protocol)
+• Scheduled leucovorin (folinic acid) rescue per protocol
+• Serial MTX levels (e.g., 24, 36, 42, 48 h) and creatinine monitoring
+This calculator does NOT replace institutional HD-MTX protocols.</textarea>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcHighBtn">Calculate high-dose PK</button>
+        <button type="button" class="secondary" id="resetHighBtn">Reset high-dose</button>
+      </div>
+
+      <small>
+        This section gives a BSA-based HD-MTX dose estimate and population PK predictions (Cmax, C24, C48, t½).
+        It does NOT give leucovorin rescue doses or level-based adjustments. Always follow your center’s HD-MTX protocol exactly.
+      </small>
+    </section>
+
+    <!-- High-dose PK & output card -->
+    <section class="card">
+      <h2>High-dose MTX – dose, PK predictions & safety flags</h2>
+
+      <div class="output-row">
+        <span class="output-label">BSA-based total MTX dose</span>
+        <span class="output-value" id="hdDoseOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Renal status for HD-MTX</span>
+        <span class="output-value" id="hdRenalOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Predicted PK (population estimates)</h2>
+      <small>Uses Vd ≈ 0.6 L/kg (TBW) and CL ≈ 0.8 × CrCl-based clearance. For education only – real patients require MTX levels.</small>
+
+      <div class="output-row">
+        <span class="output-label">Vd (approx.)</span>
+        <span class="output-value" id="hdVdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">CL (approx.)</span>
+        <span class="output-value" id="hdClOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke (approx.)</span>
+        <span class="output-value" id="hdKeOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Half-life t½</span>
+        <span class="output-value" id="hdThalfOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Predicted Cmax (end infusion)</span>
+        <span class="output-value" id="hdCmaxOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted C at 24 h</span>
+        <span class="output-value" id="hdC24Out">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Predicted C at 48 h</span>
+        <span class="output-value" id="hdC48Out">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">PK interpretation flag</span>
+        <span class="output-value" id="hdPkFlagOut">–</span>
+      </div>
+      <div id="hdPkPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2>HD-MTX safety summary</h2>
+      <div class="output-row">
+        <span class="output-label">Global HD-MTX safety note</span>
+        <span class="output-value" id="hdSafetyOut">–</span>
+      </div>
+      <div id="hdSafetyPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2>High-dose text summary (for chart / app log)</h2>
+      <div class="summary-text" id="hdSummaryText">
+        Enter patient data and HD-MTX regimen, then click “Calculate high-dose PK”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Low-dose section: once-weekly methotrexate for adult rheumatology/dermatology indications with renal adjustment and folate support.
+  High-dose section: BSA-based IV HD-MTX with population PK estimates ONLY. Both tools are for educational use.
+</footer>
+
+<script>
+  // ---------- Utility functions ----------
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // ---------- IBW / AdjBW / CrCl / BSA ----------
+  function updateDerived() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null, bsa = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") ibw = 50 + 2.3 * over5ft;
+      else ibw = 45.5 + 2.3 * over5ft;
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else if (tbw < ibw) {
+        dw = tbw;
+      } else {
+        dw = ibw;
+      }
+    } else if (tbw) {
+      dw = tbw;
+    }
+
+    if (age && sex && scr && dw) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    if (tbw && hCm) {
+      bsa = Math.sqrt((hCm * tbw) / 3600); // Mosteller
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw,1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw,1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl,0) : "";
+    document.getElementById("bsa").value = bsa ? fmt(bsa,2) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", () => {
+      updateDerived();
+      setDefaultDoses(); // keep low-dose defaults aligned with new renal/age info
+    });
+  });
+
+  // ---------- Mode toggle ----------
+  const btnLowMode = document.getElementById("btnLowMode");
+  const btnHighMode = document.getElementById("btnHighMode");
+  const lowDoseSection = document.getElementById("lowDoseSection");
+  const highDoseSection = document.getElementById("highDoseSection");
+
+  btnLowMode.addEventListener("click", () => {
+    btnLowMode.classList.add("active");
+    btnHighMode.classList.remove("active");
+    lowDoseSection.style.display = "grid";
+    highDoseSection.style.display = "none";
+  });
+
+  btnHighMode.addEventListener("click", () => {
+    btnHighMode.classList.add("active");
+    btnLowMode.classList.remove("active");
+    lowDoseSection.style.display = "none";
+    highDoseSection.style.display = "grid";
+  });
+
+  // ---------- Low-dose: indication -> default weekly doses ----------
+  function setDefaultDoses() {
+    const ind = document.getElementById("indication").value;
+    const severity = document.getElementById("severity").value;
+    const age = parseFloat(document.getElementById("age").value) || 0;
+    const crcl = parseFloat(document.getElementById("crcl").value) || null;
+
+    let start = 10;
+    let target = 20;
+
+    if (ind === "RA" || ind === "PsA") {
+      if (severity === "HIGH") {
+        start = 15;
+        target = 25;
+      } else {
+        start = 10;
+        target = 20;
+      }
+    } else if (ind === "PSO") {
+      start = 10;
+      target = 25;
+    } else {
+      start = 10;
+      target = 20;
+    }
+
+    // Elderly / lower renal function: more conservative
+    if (age >= 70 || (crcl && crcl < 60)) {
+      start = 7.5;
+      target = Math.min(target, 15);
+    }
+
+    document.getElementById("startDose").value = start;
+    document.getElementById("targetDose").value = target;
+  }
+
+  document.getElementById("indication").addEventListener("change", setDefaultDoses);
+  document.getElementById("severity").addEventListener("change", setDefaultDoses);
+
+  // ---------- Low-dose: folic acid text helper ----------
+  function getFolateText() {
+    const strategy = document.getElementById("folateStrategy").value;
+    const custom = document.getElementById("folateNote").value.trim();
+
+    if (strategy === "WEEKLY") {
+      return "Folic acid 5 mg once weekly on a different day from MTX (often the day after); may increase to 10 mg/week if toxicity.";
+    } else if (strategy === "DAILY") {
+      return "Folic acid 1 mg orally once daily, except on the methotrexate day.";
+    } else {
+      return custom || "Custom folate regimen – ensure at least ~5 mg/week total folic acid.";
+    }
+  }
+
+  // ---------- Low-dose main computation ----------
+  function computeLowDose() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+    const bsa = parseFloat(document.getElementById("bsa").value);
+
+    const liverRisk = document.getElementById("liverRisk").value;
+    const pregnancy = document.getElementById("pregnancy").value;
+    const notes = document.getElementById("notes").value || "None.";
+
+    const indication = document.getElementById("indication").value;
+    const severity = document.getElementById("severity").value;
+    const priorDmard = document.getElementById("priorDmard").value;
+    const route = document.getElementById("route").value;
+
+    let startDose = parseFloat(document.getElementById("startDose").value);
+    let targetDose = parseFloat(document.getElementById("targetDose").value);
+    const stepDose = parseFloat(document.getElementById("stepDose").value);
+    const stepInterval = parseFloat(document.getElementById("stepInterval").value);
+
+    if (!age || !sex || !hCm || !tbw || !scr || !dw || !crcl) {
+      alert("Please complete age, sex, height, weight and serum creatinine so that IBW, dosing weight and CrCl can be calculated.");
+    }
+
+    // Renal band & recommendation
+    let crclBand = "Unknown";
+    let renalAdvice = "–";
+    let renalFactor = 1.0; // multiplier on weekly doses
+
+    if (crcl) {
+      if (crcl >= 90) {
+        crclBand = "CrCl ≥90 mL/min (normal / high)";
+        renalAdvice = "No renal dose reduction required; standard MTX ranges apply.";
+        renalFactor = 1.0;
+      } else if (crcl >= 60) {
+        crclBand = "CrCl 60–89 mL/min (mild impairment)";
+        renalAdvice = "Use standard doses but monitor closely; conservative titration preferred.";
+        renalFactor = 1.0;
+      } else if (crcl >= 30) {
+        crclBand = "CrCl 30–59 mL/min (moderate CKD)";
+        renalAdvice = "Reduce weekly MTX dose by ~50%; avoid doses >15 mg/week; consider alternative csDMARDs.";
+        renalFactor = 0.5;
+      } else if (crcl >= 10) {
+        crclBand = "CrCl 10–29 mL/min (severe CKD)";
+        renalAdvice = "Avoid methotrexate – generally contraindicated in advanced CKD.";
+        renalFactor = 0;
+      } else {
+        crclBand = "CrCl <10 mL/min (very severe CKD)";
+        renalAdvice = "Methotrexate contraindicated; do NOT use.";
+        renalFactor = 0;
+      }
+    }
+
+    document.getElementById("crclBandOut").textContent = crclBand;
+    document.getElementById("renalAdviceOut").textContent = renalAdvice;
+
+    // Pregnancy / absolute contraindication
+    if (pregnancy === "Yes") {
+      renalFactor = 0;
+    }
+
+    // Ensure starting/target doses are set
+    if (!startDose || !targetDose) {
+      setDefaultDoses();
+      startDose = parseFloat(document.getElementById("startDose").value);
+      targetDose = parseFloat(document.getElementById("targetDose").value);
+    }
+
+    let startAdj = null, targetAdj = null;
+    if (renalFactor > 0) {
+      startAdj = startDose * renalFactor;
+      targetAdj = targetDose * renalFactor;
+
+      if (startAdj < 5) startAdj = 5;
+      if (targetAdj < startAdj) targetAdj = startAdj;
+      if (targetAdj > 30) targetAdj = 30;
+      if (targetAdj > 25 && renalFactor < 1) targetAdj = 20;
+    }
+
+    // Build low-dose strings
+    let startDoseText = "–";
+    let targetDoseText = "–";
+    let titrationText = "–";
+
+    if (renalFactor === 0) {
+      startDoseText = "Not recommended – MTX contraindicated (pregnancy and/or advanced CKD).";
+      targetDoseText = "Not recommended.";
+      titrationText = "Select alternative therapy or consult specialist.";
+    } else {
+      startDoseText =
+        `${fmt(startAdj,1)} mg once weekly ${route === "SC" ? "SC" : "orally"} as initial dose.`;
+      targetDoseText =
+        `${fmt(targetAdj,1)} mg once weekly ${route === "SC" ? "SC" : "orally"} as planned maximum for this patient.`;
+      titrationText =
+        `Increase by ${fmt(stepDose,1)} mg every ${fmt(stepInterval,0)} week(s) as tolerated ` +
+        `until reaching ${fmt(targetAdj,1)} mg/week, with regular CBC, LFT and creatinine monitoring.`;
+    }
+
+    document.getElementById("startDoseOut").textContent = startDoseText;
+    document.getElementById("targetDoseOut").textContent = targetDoseText;
+    document.getElementById("titrationOut").textContent = titrationText;
+
+    const folateText = getFolateText();
+    document.getElementById("folateOut").textContent = folateText;
+
+    // Safety classification
+    let safetyMsg = "Standard low-dose MTX candidate; ensure once-weekly administration and routine safety monitoring.";
+    let safetyClass = "pill-ok";
+
+    const elderly = age && age >= 70;
+    const moderateCKD = crcl && crcl >= 30 && crcl < 60;
+    const severeCKD = crcl && crcl < 30;
+    const highLiver = liverRisk === "Yes";
+
+    if (pregnancy === "Yes") {
+      safetyMsg = "Pregnancy/breastfeeding: methotrexate is absolutely contraindicated – do not use.";
+      safetyClass = "pill-alert";
+    } else if (severeCKD) {
+      safetyMsg = "CrCl <30 mL/min: MTX generally contraindicated; use alternative DMARD with nephrology/rheumatology input.";
+      safetyClass = "pill-alert";
+    } else if (highLiver) {
+      safetyMsg = "Significant liver disease/alcohol use: MTX high-risk – use only if benefits outweigh risks and with intensive monitoring.";
+      safetyClass = "pill-alert";
+    } else if (elderly || moderateCKD) {
+      safetyMsg = "Elderly and/or moderate CKD: use low starting dose (≤10 mg/week), slow escalation, close laboratory and toxicity monitoring.";
+      safetyClass = "pill-warn";
+    }
+
+    const safetyPill = document.getElementById("safetyPill");
+    safetyPill.style.display = "inline-block";
+    safetyPill.textContent = (safetyClass === "pill-ok") ? "Reasonable candidate" : "High-risk / caution";
+    safetyPill.className = "pill " + safetyClass;
+    document.getElementById("safetyOut").textContent = safetyMsg;
+
+    const monitorText =
+      "Baseline: CBC, LFTs, creatinine/eGFR, ±HBV/HCV/HIV, chest X-ray if indicated. " +
+      "Follow-up: CBC, LFTs, creatinine every 2–4 weeks during titration, then every 8–12 weeks once stable, or per local protocol.";
+    document.getElementById("monitorOut").textContent = monitorText;
+
+    // Summary text for low-dose
+    const indText = document.getElementById("indication").options[document.getElementById("indication").selectedIndex].text;
+    const routeText = (route === "SC" ? "subcutaneous injection" : "oral tablets");
+
+    const summary = [];
+    summary.push("Indication & baseline plan:");
+    summary.push(`• Indication: ${indText}; severity: ${severity === "HIGH" ? "high" : "low–moderate"}; prior DMARD: ${priorDmard}.`);
+    summary.push(`• Route: ${routeText}; methotrexate strictly once weekly (never daily).`);
+    summary.push("");
+    summary.push("Patient & renal:");
+    summary.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; weight: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; CrCl dosing weight: ${fmt(dw,1)} kg; BSA: ${fmt(bsa,2)} m².`);
+    summary.push(`• SCr: ${fmt(scr,2)} mg/dL; estimated CrCl: ${fmt(crcl,0)} mL/min (${crclBand}).`);
+    summary.push("");
+    summary.push("Dosing:");
+    summary.push(`• Renal adjustment: ${renalAdvice}`);
+    summary.push(`• Recommended starting dose: ${startDoseText}`);
+    summary.push(`• Recommended target/max dose: ${targetDoseText}`);
+    summary.push(`• Titration plan: ${titrationText}`);
+    summary.push("");
+    summary.push("Folic acid & safety:");
+    summary.push(`• Folic acid: ${folateText}`);
+    summary.push(`• Liver risk: ${liverRisk}; pregnancy/breastfeeding: ${pregnancy}.`);
+    summary.push(`• Global safety assessment: ${safetyMsg}`);
+    summary.push("• Monitoring: " + monitorText);
+    summary.push("");
+    summary.push("Other notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("Low-dose section is a guideline-based starting plan only. Final dosing must follow national/local guidance and patient-specific clinical judgement.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcLowBtn").addEventListener("click", computeLowDose);
+
+  document.getElementById("resetLowBtn").addEventListener("click", () => {
+    document.getElementById("indication").value = "RA";
+    document.getElementById("severity").value = "LOW";
+    document.getElementById("priorDmard").value = "NAIVE";
+    document.getElementById("route").value = "PO";
+    document.getElementById("folateStrategy").value = "WEEKLY";
+    document.getElementById("folateNote").value = "";
+    document.getElementById("stepDose").value = 2.5;
+    document.getElementById("stepInterval").value = 2;
+    setDefaultDoses();
+    [
+      "crclBandOut","renalAdviceOut","startDoseOut","targetDoseOut",
+      "titrationOut","folateOut","safetyOut","monitorOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data, indication and weekly plan, then click “Calculate low-dose plan”.";
+    document.getElementById("safetyPill").style.display = "none";
+  });
+
+  // ---------- High-dose defaults ----------
+  function setHdDefaults() {
+    const hdInd = document.getElementById("hdIndication").value;
+    let dose = 3; // g/m²
+    if (hdInd === "OSTEOSARCOMA") dose = 12;
+    else if (hdInd === "CNS_PROPHYLAXIS") dose = 3;
+    else if (hdInd === "ALL_CONSOLIDATION") dose = 5;
+    else if (hdInd === "LYMPHOMA_CNS") dose = 3.5;
+    else dose = 3;
+    document.getElementById("hdDoseGm2").value = dose;
+  }
+  document.getElementById("hdIndication").addEventListener("change", setHdDefaults);
+
+  // ---------- High-dose PK computation ----------
+  function computeHighDose() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+    const bsa = parseFloat(document.getElementById("bsa").value);
+
+    const liverRisk = document.getElementById("liverRisk").value;
+    const pregnancy = document.getElementById("pregnancy").value;
+    const notes = document.getElementById("notes").value || "None.";
+
+    const hdInd = document.getElementById("hdIndication").value;
+    const hdDoseGm2 = parseFloat(document.getElementById("hdDoseGm2").value);
+    const hdInfusionH = parseFloat(document.getElementById("hdInfusionH").value);
+
+    if (!age || !sex || !hCm || !tbw || !scr || !dw || !crcl || !bsa) {
+      alert("For high-dose MTX, please complete age, sex, height, weight, serum creatinine so that IBW, dosing weight, CrCl and BSA can be calculated.");
+    }
+    if (!hdDoseGm2 || hdDoseGm2 <= 0) {
+      alert("Please provide a valid high-dose MTX value in g/m².");
+      return;
+    }
+
+    // Renal suitability for HD-MTX
+    let hdRenalText = "–";
+    let hdRenalOk = true;
+    if (crcl) {
+      if (crcl >= 80) {
+        hdRenalText = "CrCl ≥80 mL/min – suitable for HD-MTX with close monitoring.";
+      } else if (crcl >= 60) {
+        hdRenalText = "CrCl 60–79 mL/min – marginal; consider dose reduction and very close monitoring.";
+      } else if (crcl >= 30) {
+        hdRenalText = "CrCl 30–59 mL/min – high risk for delayed clearance; HD-MTX often avoided or given only in specialist centers with strict protocols.";
+        hdRenalOk = false;
+      } else {
+        hdRenalText = "CrCl <30 mL/min – HD-MTX generally contraindicated.";
+        hdRenalOk = false;
+      }
+    }
+
+    document.getElementById("hdRenalOut").textContent = hdRenalText;
+
+    // Total dose
+    let totalDoseMg = null;
+    if (bsa && hdDoseGm2) {
+      totalDoseMg = hdDoseGm2 * 1000 * bsa; // g/m² × BSA ×1000 → mg
+    }
+    document.getElementById("hdDoseOut").textContent =
+      totalDoseMg ? `${fmt(totalDoseMg/1000,2)} g total (≈ ${fmt(totalDoseMg,0)} mg)` : "–";
+
+    // PK parameters: simple population model
+    // Vd ≈ 0.6 L/kg TBW
+    let Vd = tbw ? 0.6 * tbw : null;
+
+    // CL: approximate from CrCl (mL/min). Assume MTX clearance ≈ 0.8 × (CrCl * 0.06) L/h
+    let CL = null;
+    if (crcl && crcl > 0) {
+      CL = 0.8 * crcl * 0.06; // L/h
+      if (CL < 1) CL = 1;
+    }
+
+    let ke = null, tHalf = null;
+    if (CL && Vd) {
+      ke = CL / Vd;
+      tHalf = 0.693 / ke;
+    }
+
+    document.getElementById("hdVdOut").textContent =
+      Vd ? `${fmt(Vd,1)} L (${fmt(Vd/tbw,2)} L/kg)` : "–";
+    document.getElementById("hdClOut").textContent =
+      CL ? `${fmt(CL,2)} L/h` : "–";
+    document.getElementById("hdKeOut").textContent =
+      ke ? `${fmt(ke,3)} h⁻¹` : "–";
+    document.getElementById("hdThalfOut").textContent =
+      tHalf ? `${fmt(tHalf,1)} h` : "–";
+
+    // Concentration-time predictions (mg/L)
+    let Cmax = null, C24 = null, C48 = null;
+    if (totalDoseMg && CL && Vd && ke && hdInfusionH) {
+      const R = totalDoseMg / hdInfusionH; // mg/h
+      // One-compartment IV infusion model
+      Cmax = (R / (ke * Vd)) * (1 - Math.exp(-ke * hdInfusionH));
+      const delta24 = 24 - hdInfusionH;
+      const delta48 = 48 - hdInfusionH;
+      if (delta24 > 0) C24 = Cmax * Math.exp(-ke * delta24);
+      if (delta48 > 0) C48 = Cmax * Math.exp(-ke * delta48);
+    }
+
+    document.getElementById("hdCmaxOut").textContent =
+      Cmax ? `${fmt(Cmax,2)} mg/L (approx.)` : "–";
+    document.getElementById("hdC24Out").textContent =
+      C24 ? `${fmt(C24,3)} mg/L (approx.)` : "–";
+    document.getElementById("hdC48Out").textContent =
+      C48 ? `${fmt(C48,3)} mg/L (approx.)` : "–";
+
+    // PK interpretation flag (very qualitative)
+    let pkFlag = "Population estimate only – use measured MTX levels.";
+    let pkClass = "pill-warn";
+
+    if (C24 && tHalf) {
+      // Very crude qualitative interpretation: slow clearance if t½ > 12–15 h
+      if (tHalf > 15 || (!hdRenalOk)) {
+        pkFlag = "Predicted slow MTX elimination (long t½ and/or reduced CrCl) – very high risk; HD-MTX may be inappropriate.";
+        pkClass = "pill-alert";
+      } else if (tHalf >= 8 && tHalf <= 15) {
+        pkFlag = "Intermediate predicted t½ – clearance may be acceptable with full monitoring and protocol-based rescue.";
+        pkClass = "pill-warn";
+      } else {
+        pkFlag = "Predicted t½ within expected range for normal renal function; still requires intensive TDM.";
+        pkClass = "pill-ok";
+      }
+    }
+
+    const pkPill = document.getElementById("hdPkPill");
+    pkPill.style.display = "inline-block";
+    pkPill.textContent = pkFlag;
+    pkPill.className = "pill " + pkClass;
+    document.getElementById("hdPkFlagOut").textContent = pkFlag;
+
+    // HD-MTX safety global
+    let safetyHdMsg = "HD-MTX should be given only under a formal institutional protocol with hydration, alkalinization, leucovorin rescue and MTX level monitoring.";
+    let safetyHdClass = "pill-warn";
+
+    if (pregnancy === "Yes") {
+      safetyHdMsg = "Pregnancy/breastfeeding: methotrexate is absolutely contraindicated – HD-MTX must not be used.";
+      safetyHdClass = "pill-alert";
+    } else if (!hdRenalOk || crcl < 60) {
+      safetyHdMsg = "Impaired renal function (CrCl <80 mL/min): HD-MTX is high-risk; consider alternative regimen or specialist center only.";
+      safetyHdClass = "pill-alert";
+    } else if (liverRisk === "Yes") {
+      safetyHdMsg = "Significant hepatic risk: HD-MTX only with specialist input and strict monitoring.";
+      safetyHdClass = "pill-alert";
+    }
+
+    const hdSafetyPill = document.getElementById("hdSafetyPill");
+    hdSafetyPill.style.display = "inline-block";
+    hdSafetyPill.textContent = (safetyHdClass === "pill-ok") ? "HD-MTX possible with full protocol" : "High-risk HD-MTX";
+    hdSafetyPill.className = "pill " + safetyHdClass;
+    document.getElementById("hdSafetyOut").textContent = safetyHdMsg;
+
+    // High-dose summary text
+    const hdIndText = document.getElementById("hdIndication").options[document.getElementById("hdIndication").selectedIndex].text;
+
+    const summary = [];
+    summary.push("HD-MTX regimen:");
+    summary.push(`• Oncology indication: ${hdIndText}`);
+    summary.push(`• Planned dose: ${fmt(hdDoseGm2,2)} g/m² over ${fmt(hdInfusionH,1)} h.`);
+    summary.push(`• BSA: ${fmt(bsa,2)} m² → total dose ≈ ${fmt(totalDoseMg/1000,2)} g (≈ ${fmt(totalDoseMg,0)} mg).`);
+    summary.push("");
+    summary.push("Patient & renal status:");
+    summary.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; weight: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; CrCl dosing weight: ${fmt(dw,1)} kg.`);
+    summary.push(`• SCr: ${fmt(scr,2)} mg/dL; CrCl: ${fmt(crcl,0)} mL/min.`);
+    summary.push(`• Renal suitability: ${hdRenalText}`);
+    summary.push("");
+    summary.push("Predicted PK (population model – NOT a substitute for MTX levels):");
+    summary.push(`• Vd ≈ ${fmt(Vd,1)} L (${fmt(Vd && tbw ? Vd/tbw : null,2)} L/kg).`);
+    summary.push(`• CL ≈ ${fmt(CL,2)} L/h; ke ≈ ${fmt(ke,3)} h⁻¹; t½ ≈ ${fmt(tHalf,1)} h.`);
+    summary.push(`• Cmax (end infusion) ≈ ${fmt(Cmax,2)} mg/L.`);
+    summary.push(`• C at 24 h ≈ ${fmt(C24,3)} mg/L; C at 48 h ≈ ${fmt(C48,3)} mg/L.`);
+    summary.push(`• PK interpretation: ${pkFlag}`);
+    summary.push("");
+    summary.push("Safety & protocol reminders:");
+    summary.push(`• Global HD-MTX safety: ${safetyHdMsg}`);
+    summary.push("• Requirements: intensive IV hydration, urine alkalinization, scheduled leucovorin rescue, serial MTX levels (e.g., 24–48 h) and renal monitoring.");
+    summary.push("• Any deviation in MTX clearance or kidney function must trigger protocol-defined rescue intensification.");
+    summary.push("");
+    summary.push("Other notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("This HD-MTX section is for simulation/educational use. Always follow your institution’s HD-MTX protocol and PK/MTX-level based adjustments.");
+
+    document.getElementById("hdSummaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcHighBtn").addEventListener("click", computeHighDose);
+
+  document.getElementById("resetHighBtn").addEventListener("click", () => {
+    document.getElementById("hdIndication").value = "OSTEOSARCOMA";
+    document.getElementById("hdInfusionH").value = 4;
+    setHdDefaults();
+    [
+      "hdDoseOut","hdRenalOut","hdVdOut","hdClOut","hdKeOut","hdThalfOut",
+      "hdCmaxOut","hdC24Out","hdC48Out","hdPkFlagOut","hdSafetyOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("hdPkPill").style.display = "none";
+    document.getElementById("hdSafetyPill").style.display = "none";
+    document.getElementById("hdSummaryText").textContent =
+      "Enter patient data and HD-MTX regimen, then click “Calculate high-dose PK”.";
+  });
+
+  // ---------- Initialize defaults at load ----------
+  setDefaultDoses();
+  setHdDefaults();
+</script>
+</body>
+</html>

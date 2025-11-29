@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Digoxin Adult PK-Based Dosing Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #26547c;
+      color: white;
+      padding: 1.1rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1250px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.05fr) minmax(260px, 1.05fr) minmax(260px, 1.3fr);
+      gap: 1rem;
+    }
+    @media (max-width: 1100px) {
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      color: #26547c;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select, textarea {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #26547c;
+    }
+    .hint {
+      font-size: 0.74rem;
+      color: #777;
+      margin-top: 0.15rem;
+    }
+    .btn-row {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #26547c;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+      text-align: right;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #eceff3;
+      margin: 0.4rem 0 0.6rem;
+    }
+    footer {
+      max-width: 1250px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Digoxin Adult PK-Based Dosing Calculator</h1>
+  <p>Estimates loading and maintenance doses using Cockcroft–Gault, a CL–CrCl model, Vd ≈ 7 L/kg, and target serum 0.5–0.9 ng/mL. Adult, non-pregnant, non-dialysis only.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- PATIENT & RENAL -->
+    <section class="card">
+      <h2>Patient data & renal function</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="18" max="100" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="120" max="220" step="0.5">
+        </div>
+        <div class="field">
+          <label>Total body weight (kg)</label>
+          <input type="number" id="tbw" min="30" max="250" step="0.1">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Serum creatinine (mg/dL)</label>
+          <input type="number" id="scr" min="0.2" max="10" step="0.01">
+        </div>
+        <div class="field">
+          <label>Estimated CrCl (Cockcroft–Gault, mL/min)</label>
+          <input type="text" id="crcl" readonly>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>IBW (kg)</label>
+          <input type="text" id="ibw" readonly>
+        </div>
+        <div class="field">
+          <label>Dosing weight for CrCl (kg)</label>
+          <input type="text" id="dw" readonly>
+          <div class="hint">AdjBW if TBW &gt;120% IBW; otherwise TBW.</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0.9rem;">HF severity & exclusions</h2>
+
+      <div class="field">
+        <label>Heart failure severity</label>
+        <select id="hfSeverity">
+          <option value="NONE_MILD">No / mild HF (NYHA I–II)</option>
+          <option value="MOD_SEVERE">Moderate–severe HF (NYHA III–IV)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Dialysis (HD/PD/CRRT)?</label>
+        <select id="dialysis">
+          <option value="No">No (tool not for dialysis)</option>
+          <option value="Yes">Yes – use dialysis protocol, not this tool</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Pregnancy?</label>
+        <select id="pregnancy">
+          <option value="No">No</option>
+          <option value="Yes">Yes – tool not validated</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Other risk factors (elderly, hypokalemia, drugs, etc.)</label>
+        <textarea id="notes"></textarea>
+      </div>
+    </section>
+
+    <!-- INDICATION, TARGET & FORMULATION -->
+    <section class="card">
+      <h2>Indication, targets & formulation</h2>
+
+      <div class="field">
+        <label>Primary indication</label>
+        <select id="indication">
+          <option value="HF">Heart failure with reduced EF (HFrEF)</option>
+          <option value="AF">Atrial fibrillation – rate control</option>
+          <option value="BOTH">Both HF and AF</option>
+          <option value="OTHER">Other / custom (PK only)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Target steady-state concentration (ng/mL)</label>
+          <input type="number" id="cssTarget" min="0.3" max="2.0" step="0.1">
+          <div class="hint">Typically 0.5–0.9 ng/mL for most adult HF/AF patients.</div>
+        </div>
+        <div class="field">
+          <label>Therapeutic range comment</label>
+          <input type="text" id="rangeComment" readonly>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Formulation / route</label>
+        <select id="formulation">
+          <option value="IV">IV (F ≈ 1.0)</option>
+          <option value="TAB">Oral tablet/capsule (F ≈ 0.75)</option>
+          <option value="SOLN">Oral solution (F ≈ 0.8)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Loading dose strategy</label>
+          <select id="ldStrategy">
+            <option value="WEIGHT_BASED">Use weight-based LD (8–12 mcg/kg IV)</option>
+            <option value="PK_BASED">Use PK formula LD = Vd × Css / F</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Weight-based LD (mcg/kg)</label>
+          <input type="number" id="ldMgPerKg" min="6" max="15" step="0.5" value="10">
+          <div class="hint">Adults: IV 8–12 mcg/kg (IBW) typical; lower if elderly/CKD.</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Max total loading dose (mcg)</label>
+          <input type="number" id="ldMax" min="600" max="1500" step="50" value="1000">
+        </div>
+        <div class="field">
+          <label>Maintenance interval (hours)</label>
+          <input type="number" id="tau" min="24" max="48" step="12" value="24">
+          <div class="hint">Most adults: once daily (τ = 24 h).</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Rounding step (mcg) for maintenance dose</label>
+        <input type="number" id="roundStep" min="25" max="125" step="12.5" value="62.5">
+        <div class="hint">Typical tablet strengths: 62.5, 125, 250 mcg.</div>
+      </div>
+
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <small>
+        Maintenance dose is computed from: MD = Css × CL × τ / F (Css in ng/mL ≡ mcg/L; CL in L/h; τ in hours; F = bioavailability).
+        CL is estimated from CrCl and HF severity. All results must be confirmed with therapeutic drug monitoring.
+      </small>
+    </section>
+
+    <!-- OUTPUT & PK SUMMARY -->
+    <section class="card">
+      <h2>Dose recommendations & safety</h2>
+
+      <div class="output-row">
+        <span class="output-label">CrCl category</span>
+        <span class="output-value" id="crclBandOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Loading dose (strategy)</span>
+        <span class="output-value" id="ldStrategyOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Estimated loading dose (mcg)</span>
+        <span class="output-value" id="ldMgOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Suggested loading regimen</span>
+        <span class="output-value" id="ldRegimenOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Maintenance dose (mcg/day, pre-rounding)</span>
+        <span class="output-value" id="mdDailyRawOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Maintenance dose (rounded)</span>
+        <span class="output-value" id="mdDailyRoundedOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Suggested practical regimen</span>
+        <span class="output-value" id="mdRegimenOut">–</span>
+      </div>
+
+      <div class="output-row">
+        <span class="output-label">Predicted Css with rounded regimen</span>
+        <span class="output-value" id="cssPredOut">–</span>
+      </div>
+      <div id="cssPill" class="pill" style="display:none;"></div>
+
+      <div class="output-row">
+        <span class="output-label">Global safety flag</span>
+        <span class="output-value" id="safetyOut">–</span>
+      </div>
+      <div id="safetyPill" class="pill" style="display:none;"></div>
+
+      <hr>
+      <h2 style="margin-top:0.4rem;">PK estimates (population model)</h2>
+      <small>Uses CL (L/h) from CrCl model and Vd ≈ 7 L/kg (IBW for obese). Values are approximate; real-world PK requires levels.</small>
+
+      <div class="output-row">
+        <span class="output-label">Digoxin clearance (CL)</span>
+        <span class="output-value" id="clOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Volume of distribution (Vd)</span>
+        <span class="output-value" id="vdOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">ke</span>
+        <span class="output-value" id="keOut">–</span>
+      </div>
+      <div class="output-row">
+        <span class="output-label">Half-life (t½)</span>
+        <span class="output-value" id="tHalfOut">–</span>
+      </div>
+
+      <hr>
+      <h2>Summary</h2>
+      <div class="summary-text" id="summaryText">
+        Enter patient data and select indication and targets, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  This calculator uses standard pharmacokinetic equations and digoxin clearance models to estimate loading and
+  maintenance dosing. It is for educational app.
+</footer>
+
+<script>
+  // ---------- Utility functions ----------
+  function roundVal(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+  function fmt(val, digits = 1, suffix = "") {
+    if (val === null || isNaN(val)) return "n/a";
+    const r = roundVal(val, digits).toFixed(digits);
+    return suffix ? `${r}${suffix}` : r;
+  }
+
+  // ---------- IBW / AdjBW / CrCl ----------
+  function updateWeightsAndCrCl() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+
+    let ibw = null, adjbw = null, dw = null, crcl = null;
+
+    if (sex && hCm) {
+      const hIn = hCm / 2.54;
+      const over5ft = Math.max(0, hIn - 60);
+      if (sex === "M") {
+        ibw = 50 + 2.3 * over5ft;
+      } else {
+        ibw = 45.5 + 2.3 * over5ft;
+      }
+    }
+
+    if (ibw && tbw) {
+      if (tbw > 1.2 * ibw) {
+        adjbw = ibw + 0.4 * (tbw - ibw);
+        dw = adjbw;
+      } else if (tbw < ibw) {
+        dw = tbw;
+      } else {
+        dw = ibw;
+      }
+    } else if (tbw) {
+      dw = tbw;
+    }
+
+    if (age && sex && scr && dw) {
+      crcl = ((140 - age) * dw) / (72 * scr);
+      if (sex === "F") crcl *= 0.85;
+    }
+
+    document.getElementById("ibw").value = ibw ? fmt(ibw,1) : "";
+    document.getElementById("dw").value = dw ? fmt(dw,1) : "";
+    document.getElementById("crcl").value = crcl ? fmt(crcl,0) : "";
+  }
+
+  ["age","sex","height","tbw","scr"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateWeightsAndCrCl);
+  });
+
+  // ---------- Indication -> default Css & comment ----------
+  function updateCssDefaults() {
+    const ind = document.getElementById("indication").value;
+    const cssField = document.getElementById("cssTarget");
+    const commentField = document.getElementById("rangeComment");
+
+    if (ind === "HF") {
+      cssField.value = 0.7;
+      commentField.value = "HF: aim ~0.5–0.9 ng/mL (upper ~1.0).";
+    } else if (ind === "AF" || ind === "BOTH") {
+      cssField.value = 0.8;
+      commentField.value = "AF/HF: often 0.5–0.9 ng/mL; avoid >1.2.";
+    } else {
+      cssField.value = 0.7;
+      commentField.value = "Custom; typical therapeutic 0.5–0.9 ng/mL.";
+    }
+  }
+  document.getElementById("indication").addEventListener("change", updateCssDefaults);
+  updateCssDefaults();
+
+  // ---------- Main computation ----------
+  function compute() {
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const hCm = parseFloat(document.getElementById("height").value);
+    const tbw = parseFloat(document.getElementById("tbw").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crcl = parseFloat(document.getElementById("crcl").value);
+    const ibw = parseFloat(document.getElementById("ibw").value);
+    const dw = parseFloat(document.getElementById("dw").value);
+
+    const hfSeverity = document.getElementById("hfSeverity").value;
+    const dialysis = document.getElementById("dialysis").value;
+    const pregnancy = document.getElementById("pregnancy").value;
+    const notes = document.getElementById("notes").value || "None.";
+
+    const indication = document.getElementById("indication").value;
+    let cssTarget = parseFloat(document.getElementById("cssTarget").value); // ng/mL = mcg/L
+    const formulation = document.getElementById("formulation").value;
+    const ldStrategy = document.getElementById("ldStrategy").value;
+    const ldMgPerKg = parseFloat(document.getElementById("ldMgPerKg").value);
+    const ldMax = parseFloat(document.getElementById("ldMax").value);
+    const tau = parseFloat(document.getElementById("tau").value);
+    const roundStep = parseFloat(document.getElementById("roundStep").value);
+
+    if (!age || !sex || !hCm || !tbw || !scr || !dw || !crcl) {
+      alert("Please complete age, sex, height, total body weight, and serum creatinine so that IBW, dosing weight and CrCl can be calculated.");
+    }
+
+    if (dialysis === "Yes") {
+      alert("Dialysis patients require dedicated digoxin protocols; this PK tool is not validated for dialysis.");
+    }
+    if (pregnancy === "Yes") {
+      alert("Pregnancy: digoxin dosing should follow specialized references; this tool is not validated.");
+    }
+
+    // Guard Css target range
+    if (!cssTarget || cssTarget <= 0.3) cssTarget = 0.5;
+    if (cssTarget > 1.5) cssTarget = 1.5;
+    document.getElementById("cssTarget").value = cssTarget;
+
+    // CrCl band
+    let crclBand = "Unknown";
+    if (crcl) {
+      if (crcl >= 90) crclBand = "CrCl ≥90 mL/min (normal/high)";
+      else if (crcl >= 60) crclBand = "CrCl 60–89 (mild impairment)";
+      else if (crcl >= 30) crclBand = "CrCl 30–59 (moderate impairment)";
+      else if (crcl >= 15) crclBand = "CrCl 15–29 (severe impairment)";
+      else crclBand = "CrCl <15 (very severe, non-dialysis)";
+    }
+    document.getElementById("crclBandOut").textContent = crclBand;
+
+    // ---------- Bioavailability by formulation ----------
+    let F = 1.0;
+    if (formulation === "IV") F = 1.0;
+    else if (formulation === "TAB") F = 0.75;
+    else if (formulation === "SOLN") F = 0.8;
+
+    // ---------- Volume of distribution ----------
+    // Use IBW if obese, else TBW
+    let vdWeight = tbw;
+    if (ibw && tbw && tbw > 1.2 * ibw) {
+      vdWeight = ibw;
+    }
+    let Vd = vdWeight ? 7.0 * vdWeight : null; // L
+
+    // ---------- Clearance from CrCl & HF severity ----------
+    let clDig_mLmin = null;
+    if (crcl && crcl > 0) {
+      const nonRenal = (hfSeverity === "MOD_SEVERE") ? 20 : 40; // mL/min
+      clDig_mLmin = 1.303 * crcl + nonRenal;
+      // clamp to reasonable range
+      if (clDig_mLmin < 20) clDig_mLmin = 20;
+      if (clDig_mLmin > 250) clDig_mLmin = 250;
+    }
+    let CL = clDig_mLmin ? clDig_mLmin * 0.06 : null; // convert mL/min → L/h
+
+    // PK parameters
+    let ke = null, tHalf = null;
+    if (CL && Vd) {
+      ke = CL / Vd;
+      tHalf = 0.693 / ke;
+    }
+
+    document.getElementById("clOut").textContent = CL ? `${fmt(CL,2)} L/h` : "–";
+    document.getElementById("vdOut").textContent =
+      Vd ? `${fmt(Vd,1)} L (${fmt(Vd && vdWeight ? Vd/vdWeight : null,2)} L/kg)` : "–";
+    document.getElementById("keOut").textContent = ke ? `${fmt(ke,3)} h⁻¹` : "–";
+    document.getElementById("tHalfOut").textContent = tHalf ? `${fmt(tHalf,1)} h` : "–";
+
+    // ---------- Loading dose ----------
+    let ldStrategyText = "";
+    let ldTotal = null;
+    if (ldStrategy === "WEIGHT_BASED") {
+      const baseWt = ibw || tbw;
+      if (baseWt && ldMgPerKg) {
+        ldTotal = ldMgPerKg * baseWt; // mcg
+        if (ldMax && ldTotal > ldMax) ldTotal = ldMax;
+      }
+      ldStrategyText = `Weight-based ${fmt(ldMgPerKg,1)} mcg/kg (IBW/TBW)`;
+    } else { // PK-based
+      if (Vd && cssTarget && F) {
+        // Css in ng/mL = mcg/L
+        ldTotal = Vd * cssTarget / F; // mcg
+        if (ldMax && ldTotal > ldMax) ldTotal = ldMax;
+      }
+      ldStrategyText = "PK-based LD = Vd × Css / F";
+    }
+
+    let ldRegimen = "–";
+    if (ldTotal) {
+      const first = 0.5 * ldTotal;
+      const next = 0.25 * ldTotal;
+      ldRegimen =
+        `${fmt(ldTotal,0)} mcg total: give ${fmt(first,0)} mcg now, then ${fmt(next,0)} mcg q6h × 2 (adjust if elderly/CKD).`;
+    }
+
+    document.getElementById("ldStrategyOut").textContent = ldStrategyText || "–";
+    document.getElementById("ldMgOut").textContent = ldTotal ? `${fmt(ldTotal,0)} mcg (capped)` : "–";
+    document.getElementById("ldRegimenOut").textContent = ldRegimen;
+
+    // ---------- Maintenance dose (daily) ----------
+    let mdDaily = null;
+    if (CL && cssTarget && tau && F) {
+      // CssTarget in ng/mL = mcg/L
+      mdDaily = cssTarget * CL * 24 / F * (tau / 24); // mg/day? careful
+
+      // Actually: MD (per dose, mcg) = Css * CL * tau / F.
+      // For once daily, tau=24; MD/day = MD (per dose).
+      // Here simpler: compute MD/day directly with tau=24:
+      const CL_day = CL * 24; // L/day
+      mdDaily = cssTarget * CL_day / F; // mcg/day
+
+      // Bound within reasonable adult range
+      if (mdDaily < 62.5) mdDaily = 62.5;
+      if (mdDaily > 500) mdDaily = 500;
+    }
+
+    // Rounded daily dose & regimen
+    let mdDailyRounded = null;
+    let regimenText = "–";
+    let cssPred = null;
+    if (mdDaily) {
+      if (roundStep && roundStep > 0) {
+        mdDailyRounded = Math.round(mdDaily / roundStep) * roundStep;
+      } else {
+        mdDailyRounded = mdDaily;
+      }
+
+      // Construct practical regimen
+      // Express in mg for readability
+      const dailyMg = mdDailyRounded / 1000.0;
+
+      // Basic once-daily suggestion
+      regimenText = `${fmt(mdDailyRounded,0)} mcg once daily (≈ ${fmt(dailyMg,3)} mg/day).`;
+
+      // If between typical strengths, suggest alternate-day pattern
+      if (mdDailyRounded > 125 && mdDailyRounded < 250) {
+        regimenText += " Consider 0.125 mg and 0.25 mg on alternating days (average ≈ 0.1875 mg/day) if tablets available.";
+      } else if (mdDailyRounded <= 125) {
+        regimenText += " In elderly/CKD, 0.125 mg daily (or 0.0625 mg in frail) is often preferred.";
+      } else if (mdDailyRounded >= 250) {
+        regimenText += " Doses >0.25 mg/day increase toxicity risk; consider 0.25 mg daily with close level monitoring rather than higher doses.";
+      }
+
+      // Predicted Css from rounded regimen
+      if (CL && F) {
+        const CL_day = CL * 24; // L/day
+        cssPred = (mdDailyRounded * F) / CL_day; // mcg/L = ng/mL
+      }
+    }
+
+    document.getElementById("mdDailyRawOut").textContent =
+      mdDaily ? `${fmt(mdDaily,0)} mcg/day (pre-rounding)` : "–";
+    document.getElementById("mdDailyRoundedOut").textContent =
+      mdDailyRounded ? `${fmt(mdDailyRounded,0)} mcg/day (rounded)` : "–";
+    document.getElementById("mdRegimenOut").textContent = regimenText;
+
+    // Css comparison vs target
+    let cssStatus = "–";
+    let cssClass = "pill-warn";
+    if (cssPred) {
+      document.getElementById("cssPredOut").textContent =
+        `${fmt(cssPred,2)} ng/mL (predicted) vs target ${fmt(cssTarget,2)} ng/mL`;
+      if (cssPred < 0.5) {
+        cssStatus = "Below typical therapeutic range (may be subtherapeutic).";
+        cssClass = "pill-warn";
+      } else if (cssPred > 1.2) {
+        cssStatus = "Above preferred range; toxicity risk increased, especially in elderly/CKD.";
+        cssClass = "pill-alert";
+      } else {
+        cssStatus = "Within approximate preferred range (0.5–0.9/1.0 ng/mL).";
+        cssClass = "pill-ok";
+      }
+    } else {
+      document.getElementById("cssPredOut").textContent = "–";
+    }
+
+    const cssPill = document.getElementById("cssPill");
+    cssPill.style.display = "inline-block";
+    cssPill.textContent = cssStatus;
+    cssPill.className = "pill " + cssClass;
+
+    // ---------- Safety flag ----------
+    let safetyMsg = "Use lowest effective dose; check digoxin level after 5–7 days and regularly thereafter.";
+    let safetyClass = "pill-ok";
+
+    const elderly = age && age >= 70;
+    const lowCrCl = crcl && crcl < 50;
+
+    if (pregnancy === "Yes" || dialysis === "Yes") {
+      safetyMsg = "Pregnancy or dialysis: this model is not validated – use specialist guidance and TDM.";
+      safetyClass = "pill-alert";
+    } else if (cssPred && cssPred > 1.2) {
+      safetyMsg = "Predicted Css >1.2 ng/mL – high risk of toxicity; reduce dose and monitor closely.";
+      safetyClass = "pill-alert";
+    } else if (elderly || lowCrCl) {
+      safetyMsg = "Elderly and/or reduced CrCl – prefer ≤0.125 mg/day, avoid high levels; monitor SDC and electrolytes.";
+      safetyClass = "pill-warn";
+    }
+
+    const safetyPill = document.getElementById("safetyPill");
+    safetyPill.style.display = "inline-block";
+    safetyPill.textContent = (safetyClass === "pill-ok") ? "Reasonable starting regimen" : "Caution / high-risk";
+    safetyPill.className = "pill " + safetyClass;
+    document.getElementById("safetyOut").textContent = safetyMsg;
+
+    // ---------- Text summary ----------
+    const summary = [];
+    const indText = document.getElementById("indication").options[document.getElementById("indication").selectedIndex].text;
+
+    summary.push("Indication & targets:");
+    summary.push(`• Indication: ${indText}`);
+    summary.push(`• Target Css: ${fmt(cssTarget,2)} ng/mL; predicted Css with rounded regimen: ${cssPred ? fmt(cssPred,2) : "n/a"} ng/mL.`);
+    summary.push("");
+
+    summary.push("Patient & renal:");
+    summary.push(`• Age: ${isNaN(age) ? "n/a" : age + " years"}, Sex: ${sex || "n/a"}.`);
+    summary.push(`• Height: ${fmt(hCm,1)} cm; TBW: ${fmt(tbw,1)} kg; IBW: ${fmt(ibw,1)} kg; CrCl dosing weight: ${fmt(dw,1)} kg.`);
+    summary.push(`• SCr: ${fmt(scr,2)} mg/dL; estimated CrCl: ${fmt(crcl,0)} mL/min (${crclBand}).`);
+    summary.push(`• HF severity: ${hfSeverity === "MOD_SEVERE" ? "Moderate–severe" : "None/mild"}.`);
+    summary.push("");
+
+    summary.push("PK parameters:");
+    summary.push(`• Vd ≈ ${fmt(Vd,1)} L (${fmt(Vd && vdWeight ? Vd/vdWeight : null,2)} L/kg).`);
+    summary.push(`• Digoxin CL ≈ ${fmt(CL,2)} L/h (from CrCl & HF model).`);
+    summary.push(`• ke ≈ ${fmt(ke,3)} h⁻¹; t½ ≈ ${fmt(tHalf,1)} h.`);
+    summary.push("");
+
+    summary.push("Loading dose:");
+    summary.push(`• Strategy: ${ldStrategyText || "n/a"}.`);
+    summary.push(`• Estimated LD: ${ldTotal ? fmt(ldTotal,0) + " mcg" : "n/a"}.`);
+    summary.push(`• Suggested regimen: ${ldRegimen}`);
+    summary.push("");
+
+    summary.push("Maintenance dosing:");
+    summary.push(`• Calculated MD (pre-rounding): ${mdDaily ? fmt(mdDaily,0) + " mcg/day" : "n/a"}.`);
+    summary.push(`• Rounded MD: ${mdDailyRounded ? fmt(mdDailyRounded,0) + " mcg/day" : "n/a"} (τ = ${tau} h).`);
+    summary.push(`• Practical regimen: ${regimenText}`);
+    summary.push("");
+
+    summary.push("Safety & monitoring:");
+    summary.push(`• Safety assessment: ${safetyMsg}`);
+    summary.push("• Check serum digoxin concentration (trough ≥6 h post-dose, typically after ≈1 week and after dose changes).");
+    summary.push("• Monitor K⁺, Mg²⁺, renal function, and interacting drugs (e.g., amiodarone, verapamil, macrolides).");
+    summary.push("");
+    summary.push("Other notes:");
+    summary.push(`• ${notes}`);
+    summary.push("");
+    summary.push("This is a PK-based starting point only. Final dosing must be individualized using measured digoxin levels, clinical response, and your institution’s protocol/nomograms.");
+
+    document.getElementById("summaryText").textContent = summary.join("\n");
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", compute);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(el => el.value = "");
+    document.getElementById("sex").value = "";
+    document.getElementById("hfSeverity").value = "NONE_MILD";
+    document.getElementById("dialysis").value = "No";
+    document.getElementById("pregnancy").value = "No";
+    document.getElementById("notes").value = "";
+    document.getElementById("indication").value = "HF";
+    document.getElementById("formulation").value = "TAB";
+    document.getElementById("ldStrategy").value = "WEIGHT_BASED";
+    document.getElementById("ldMgPerKg").value = 10;
+    document.getElementById("ldMax").value = 1000;
+    document.getElementById("tau").value = 24;
+    document.getElementById("roundStep").value = 62.5;
+    updateCssDefaults();
+    [
+      "crclBandOut","ldStrategyOut","ldMgOut","ldRegimenOut",
+      "mdDailyRawOut","mdDailyRoundedOut","mdRegimenOut",
+      "cssPredOut","safetyOut","clOut","vdOut","keOut","tHalfOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data and select indication and targets, then click “Calculate”.";
+    document.getElementById("cssPill").style.display = "none";
+    document.getElementById("safetyPill").style.display = "none";
+  });
+</script>
+</body>
+</html>

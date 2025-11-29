@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Meropenem PK/PD & Renal Dosing Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f6f8;
+      color: #222;
+    }
+    header {
+      background: #0f4c81;
+      color: #fff;
+      padding: 1.2rem 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1100px;
+      margin: 1.5rem auto 2rem;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem 1.1rem 1.3rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 0.6rem;
+      font-size: 1.05rem;
+      color: #0f4c81;
+    }
+    .card small {
+      color: #666;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.6rem;
+    }
+    .field-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.15rem;
+    }
+    input, select {
+      padding: 0.35rem 0.45rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccd1d9;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus {
+      border-color: #0f4c81;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: #777;
+      margin-top: 0.1rem;
+    }
+    .btn-row {
+      margin-top: 0.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    button {
+      border-radius: 4px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      background: #0f4c81;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e0e3ea;
+      color: #222;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .output-row {
+      margin-bottom: 0.35rem;
+      font-size: 0.86rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .output-label {
+      color: #555;
+    }
+    .output-value {
+      font-weight: 600;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .pill-ok {
+      background: #e2f6e9;
+      color: #21693b;
+    }
+    .pill-warn {
+      background: #fff4e5;
+      color: #9a5b00;
+    }
+    .pill-alert {
+      background: #fde2e2;
+      color: #a11a1a;
+    }
+    .summary-text {
+      font-size: 0.82rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    footer {
+      max-width: 1100px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      color: #777;
+    }
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.2rem;
+      }
+      main {
+        padding: 0 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Meropenem PK/PD & Renal Dosing Calculator</h1>
+  <p>Educational decision-support tool.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- Patient & renal inputs -->
+    <section class="card">
+      <h2>Patient data</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Age (years)</label>
+          <input type="number" id="age" min="16" max="120" step="1">
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="">Select…</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" min="20" max="250" step="0.1">
+        </div>
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" min="100" max="220" step="0.5">
+        </div>
+      </div>
+      <div class="field">
+        <label>Serum creatinine (mg/dL)</label>
+        <input type="number" id="scr" min="0.2" max="10" step="0.01">
+        <div class="hint">Stable SCr assumed. CG CrCl is used if measured CrCl is not available.</div>
+      </div>
+      <div class="field">
+        <label>Measured creatinine clearance (mL/min, optional)</label>
+        <input type="number" id="crclMeasured" min="0" max="300" step="1">
+        <div class="hint">If provided, this value is used in the CL model (capped 10–130 mL/min).</div>
+      </div>
+      <div class="field">
+        <label>Infection type / notes (free text)</label>
+        <input type="text" id="infection" placeholder="e.g., HAP, VAP, meningitis, cIAI…">
+      </div>
+    </section>
+
+    <!-- Regimen & PD target -->
+    <section class="card">
+      <h2>Regimen & PD target</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Dose per administration (mg)</label>
+          <input type="number" id="dose" min="125" max="4000" step="125">
+        </div>
+        <div class="field">
+          <label>Dosing interval τ (h)</label>
+          <input type="number" id="tau" min="4" max="48" step="1">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Infusion duration (h)</label>
+          <input type="number" id="tinfu" min="0.25" max="6" step="0.25" value="0.5">
+          <div class="hint">0.5 = 30 min bolus; 3 = extended; 6 = very prolonged.</div>
+        </div>
+        <div class="field">
+          <label>Pathogen MIC (mg/L)</label>
+          <input type="number" id="mic" min="0.0625" max="16" step="0.0625" value="1">
+          <div class="hint">If unknown, many centers assume 1 mg/L for Pseudomonas.</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>PD target</label>
+          <select id="pdTarget">
+            <option value="">Select…</option>
+            <option value="Standard">Standard (≥40% fT&gt;MIC)</option>
+            <option value="Aggressive">Aggressive (100% fT&gt;MIC)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reference full dose for renal rules (mg)</label>
+          <input type="number" id="refDose" min="125" max="4000" step="125" value="1000">
+          <div class="hint">Used only for suggested renal-dose band (e.g., 1000 mg).</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="calcBtn">Calculate</button>
+        <button type="button" class="secondary" id="resetBtn">Reset</button>
+      </div>
+      <small>Disclaimer: This tool is not a substitute for clinical judgement, local guidelines, or TDM.</small>
+    </section>
+
+    <!-- Renal & PK outputs -->
+    <section class="card">
+      <h2>Renal function & PK</h2>
+      <div id="renalPkOutputs">
+        <div class="output-row">
+          <span class="output-label">CrCl (Cockcroft–Gault)</span>
+          <span class="output-value" id="crclOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">CrCl used in CL model (capped 10–130)</span>
+          <span class="output-value" id="crclEffOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Renal category</span>
+          <span class="output-value" id="renalBandOut">–</span>
+        </div>
+        <hr>
+        <div class="output-row">
+          <span class="output-label">CL</span>
+          <span class="output-value" id="clOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Vd</span>
+          <span class="output-value" id="vdOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">k<sub>e</sub></span>
+          <span class="output-value" id="keOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">t<sub>1/2</sub></span>
+          <span class="output-value" id="tHalfOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">AUC<sub>24</sub></span>
+          <span class="output-value" id="aucOut">–</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PD & regimen outputs -->
+    <section class="card">
+      <h2>PD indices & regimen</h2>
+      <div id="pdOutputs">
+        <div class="output-row">
+          <span class="output-label">C<sub>max,ss</sub> (total)</span>
+          <span class="output-value" id="cmaxOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">C<sub>min,ss</sub> (total)</span>
+          <span class="output-value" id="cminOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">C<sub>max,free</sub></span>
+          <span class="output-value" id="cmaxFreeOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">%fT&gt;MIC (approx.)</span>
+          <span class="output-value" id="ftMicOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">PD target</span>
+          <span class="output-value" id="pdTargetOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">PD goal achieved?</span>
+          <span class="output-value" id="pdGoalOut">–</span>
+        </div>
+        <hr>
+        <div class="output-row">
+          <span class="output-label">Suggested renal-adjusted interval</span>
+          <span class="output-value" id="recTauOut">–</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Suggested renal-adjusted dose</span>
+          <span class="output-value" id="recDoseOut">–</span>
+        </div>
+        <div class="hint">Renal suggestions are label-style skeleton only; align with local protocol.</div>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="card">
+      <h2>Summary</h2>
+      <div id="pdStatusPill" class="pill" style="display:none;"></div>
+      <div class="summary-text" id="summaryText">
+        Enter patient data and regimen, then click “Calculate”.
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  This calculator uses an adult ICU meropenem population PK model with clearance linked
+  to measured creatinine clearance, and standard β-lactam PK/PD targets (fT&gt;MIC).
+</footer>
+
+<script>
+  function round(val, digits) {
+    if (val === null || isNaN(val)) return null;
+    const factor = Math.pow(10, digits);
+    return Math.round(val * factor) / factor;
+  }
+
+  function calc() {
+    // Inputs
+    const age = parseFloat(document.getElementById("age").value);
+    const sex = document.getElementById("sex").value;
+    const wt = parseFloat(document.getElementById("weight").value);
+    const ht = parseFloat(document.getElementById("height").value);
+    const scr = parseFloat(document.getElementById("scr").value);
+    const crclMeasured = parseFloat(document.getElementById("crclMeasured").value);
+    const dose = parseFloat(document.getElementById("dose").value);
+    const tau = parseFloat(document.getElementById("tau").value);
+    const tinfu = parseFloat(document.getElementById("tinfu").value);
+    const mic = parseFloat(document.getElementById("mic").value);
+    const pdTargetMode = document.getElementById("pdTarget").value;
+    const refDose = parseFloat(document.getElementById("refDose").value);
+
+    // Basic input validation (minimal, non-blocking)
+    if (!age || !sex || !wt || !scr || !dose || !tau || !tinfu || !mic) {
+      alert("Please enter at least age, sex, weight, SCr, dose, interval, infusion duration, and MIC.");
+    }
+
+    // Cockcroft–Gault CrCl (mL/min) using actual weight
+    let crclMale = null;
+    if (age && wt && scr) {
+      crclMale = ((140 - age) * wt) / (72 * scr);
+    }
+    let crcl = null;
+    if (crclMale !== null) {
+      crcl = (sex === "F") ? 0.85 * crclMale : crclMale;
+    }
+
+    // CrCl used for CL model (measured if available, otherwise CG), capped 10–130
+    let crclUsed = null;
+    if (!isNaN(crclMeasured)) {
+      crclUsed = crclMeasured;
+    } else {
+      crclUsed = crcl;
+    }
+    let crclEff = null;
+    if (crclUsed !== null && !isNaN(crclUsed)) {
+      crclEff = Math.max(10, Math.min(130, crclUsed));
+    }
+
+    // Renal band (label-style)
+    let renalBand = "Unknown";
+    if (crcl !== null && !isNaN(crcl)) {
+      if (crcl > 50) renalBand = ">50 mL/min";
+      else if (crcl >= 26) renalBand = "26–50 mL/min";
+      else if (crcl >= 10) renalBand = "10–25 mL/min";
+      else renalBand = "<10 mL/min";
+    }
+
+    // Vd = 0.3 L/kg
+    const vd = wt ? 0.3 * wt : null;
+
+    // CL from Kees renal model (L/h), min 2 L/h for stability
+    let cl = null;
+    if (crclEff !== null && !isNaN(crclEff)) {
+      cl = 11.3 * (1 + 0.00932 * (crclEff - 80));
+      if (cl < 2) cl = 2;
+    }
+
+    let ke = null, tHalf = null, auc24 = null;
+    if (cl && vd) {
+      ke = cl / vd;
+      tHalf = 0.693 / ke;
+    }
+
+    // Accumulation factor R
+    let R = null;
+    if (ke && tau) {
+      const term = Math.exp(-ke * tau);
+      if (term < 1) R = 1 / (1 - term);
+    }
+
+    // Cmax_ss and Cmin_ss for intermittent infusion
+    let cmax = null, cmin = null;
+    if (cl && dose && tinfu && ke && R) {
+      const infusionTerm = 1 - Math.exp(-ke * tinfu);
+      cmax = (dose / (tinfu * cl)) * infusionTerm * R;
+      const delta = tau - tinfu;
+      if (delta >= 0) {
+        cmin = cmax * Math.exp(-ke * delta);
+      }
+    }
+
+    // Free fraction fu = 0.98
+    const fu = 0.98;
+    let cmaxFree = (cmax !== null) ? fu * cmax : null;
+
+    // AUC24
+    if (cl && dose && tau) {
+      auc24 = (dose * 24 / tau) / cl;
+    }
+
+    // AUC/MIC & fT>MIC
+    let ftMic = null;
+    let tMic = null;
+    if (cmaxFree && ke && mic) {
+      if (cmaxFree <= mic) {
+        tMic = 0;
+      } else {
+        tMic = (1 / ke) * Math.log(cmaxFree / mic);
+      }
+      if (tMic < 0) tMic = 0;
+      if (tau) {
+        ftMic = 100 * (tMic / tau);
+        if (ftMic > 100) ftMic = 100;
+        if (ftMic < 0) ftMic = 0;
+      }
+    }
+
+    let aucMic = null;
+    if (auc24 && mic) {
+      aucMic = auc24 / mic;
+    }
+
+    // PD target
+    let pdTargetPercent = null;
+    let pdTargetLabel = "";
+    if (pdTargetMode === "Standard") {
+      pdTargetPercent = 40;
+      pdTargetLabel = "Standard (≥40% fT>MIC)";
+    } else if (pdTargetMode === "Aggressive") {
+      pdTargetPercent = 100;
+      pdTargetLabel = "Aggressive (100% fT>MIC)";
+    }
+
+    let pdGoal = "N/A";
+    if (ftMic !== null && pdTargetPercent !== null) {
+      pdGoal = (ftMic >= pdTargetPercent) ? "Yes" : "No";
+    }
+
+    // Renal-based suggested regimen based on refDose
+    let recTau = null, recDose = null;
+    if (crcl !== null && !isNaN(crcl) && refDose) {
+      if (crcl > 50) {
+        recTau = 8;
+        recDose = refDose;
+      } else if (crcl >= 26) {
+        recTau = 12;
+        recDose = refDose;
+      } else if (crcl >= 10) {
+        recTau = 12;
+        recDose = 0.5 * refDose;
+      } else {
+        recTau = 24;
+        recDose = 0.5 * refDose;
+      }
+    }
+
+    // Update UI
+    document.getElementById("crclOut").textContent =
+      crcl !== null && !isNaN(crcl) ? `${round(crcl,1)} mL/min` : "–";
+    document.getElementById("crclEffOut").textContent =
+      crclEff !== null && !isNaN(crclEff) ? `${round(crclEff,1)} mL/min` : "–";
+    document.getElementById("renalBandOut").textContent = renalBand;
+
+    document.getElementById("clOut").textContent =
+      cl ? `${round(cl,2)} L/h` : "–";
+    document.getElementById("vdOut").textContent =
+      vd ? `${round(vd,2)} L` : "–";
+    document.getElementById("keOut").textContent =
+      ke ? `${round(ke,3)} 1/h` : "–";
+    document.getElementById("tHalfOut").textContent =
+      tHalf ? `${round(tHalf,2)} h` : "–";
+    document.getElementById("aucOut").textContent =
+      auc24 ? `${round(auc24,1)} mg·h/L` : "–";
+
+    document.getElementById("cmaxOut").textContent =
+      cmax ? `${round(cmax,1)} mg/L` : "–";
+    document.getElementById("cminOut").textContent =
+      cmin ? `${round(cmin,1)} mg/L` : "–";
+    document.getElementById("cmaxFreeOut").textContent =
+      cmaxFree ? `${round(cmaxFree,1)} mg/L` : "–";
+    document.getElementById("ftMicOut").textContent =
+      ftMic !== null ? `${round(ftMic,0)} %` : "–";
+
+    document.getElementById("pdTargetOut").textContent =
+      pdTargetLabel || "–";
+    document.getElementById("pdGoalOut").textContent = pdGoal;
+
+    document.getElementById("recTauOut").textContent =
+      recTau ? `q${recTau} h` : "–";
+    document.getElementById("recDoseOut").textContent =
+      recDose ? `${round(recDose,0)} mg` : "–";
+
+    // Status pill
+    const pill = document.getElementById("pdStatusPill");
+    pill.style.display = "inline-block";
+    pill.textContent = "PD status: " + (pdGoal === "Yes" ? "Target achieved" :
+                                       pdGoal === "No" ? "Target not achieved" : "Insufficient data");
+    pill.className = "pill " + (pdGoal === "Yes" ? "pill-ok" :
+                                pdGoal === "No" ? "pill-alert" : "pill-warn");
+
+    // Summary text
+    const infection = document.getElementById("infection").value || "Not specified";
+
+    let summary = "";
+    summary += `Infection: ${infection}\n`;
+    summary += `Renal: CrCl (CG) ${crcl ? round(crcl,1)+' mL/min' : 'n/a'} `
+            + `→ band ${renalBand}; CrCl used in CL model ${crclEff ? round(crclEff,1)+' mL/min' : 'n/a'}.\n`;
+    summary += `PK: CL ${cl ? round(cl,2)+' L/h' : 'n/a'}, Vd ${vd ? round(vd,2)+' L' : 'n/a'}, `
+            + `t½ ${tHalf ? round(tHalf,2)+' h' : 'n/a'}.\n`;
+    summary += `Regimen: ${dose || 'n/a'} mg over ${tinfu || 'n/a'} h, every ${tau || 'n/a'} h; MIC ${mic || 'n/a'} mg/L.\n`;
+    summary += `Exposure: Cmax,ss ${cmax ? round(cmax,1)+' mg/L' : 'n/a'}, `
+            + `Cmin,ss ${cmin ? round(cmin,1)+' mg/L' : 'n/a'}, `
+            + `AUC24 ${auc24 ? round(auc24,1)+' mg·h/L' : 'n/a'}, `
+            + `fT>MIC ~${ftMic !== null ? round(ftMic,0)+'%' : 'n/a'}.\n`;
+    summary += `PD: target ${pdTargetLabel || 'not set'}; goal ${pdGoal}. `;
+    if (pdGoal === "No") {
+      summary += `Consider prolonged infusion, higher total daily dose, or shorter τ if clinically appropriate and safe.\n`;
+    } else {
+      summary += `Regimen appears adequate for the selected target (subject to clinical context).\n`;
+    }
+    summary += `Renal-based suggestion (label-style): ~${recDose ? round(recDose,0)+' mg' : 'n/a'} q${recTau || 'n/a'}h using reference dose `
+            + `${refDose || 'n/a'} mg.\n`;
+    summary += `Always cross-check with local ICU/ID guidelines and consider TDM when available.`;
+
+    document.getElementById("summaryText").textContent = summary;
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", calc);
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.querySelectorAll("input").forEach(i => i.value = "");
+    document.querySelectorAll("select").forEach(s => s.value = "");
+    document.getElementById("summaryText").textContent =
+      "Enter patient data and regimen, then click “Calculate”.";
+    document.getElementById("pdStatusPill").style.display = "none";
+    [
+      "crclOut","crclEffOut","renalBandOut",
+      "clOut","vdOut","keOut","tHalfOut","aucOut",
+      "cmaxOut","cminOut","cmaxFreeOut","ftMicOut",
+      "pdTargetOut","pdGoalOut","recTauOut","recDoseOut"
+    ].forEach(id => document.getElementById(id).textContent = "–");
+  });
+</script>
+</body>
+</html>
