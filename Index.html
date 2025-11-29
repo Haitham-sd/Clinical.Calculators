@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clinical Pharmacotherapy Calculator Suite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f8;
+      color: #1e293b;
+    }
+    header {
+      background: #0f172a;
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+    header p {
+      margin: 0.5rem 0 0;
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+    main {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem 1.2rem 1.4rem;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card h2 {
+      margin: 0 0 0.4rem;
+      font-size: 1.05rem;
+      color: #0f172a;
+    }
+    .card p {
+      margin: 0 0 0.8rem;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+    .button {
+      display: inline-block;
+      padding: 0.5rem 0.8rem;
+      text-align: center;
+      background: #0f172a;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: 0.2s;
+      font-size: 0.85rem;
+    }
+    .button:hover {
+      background: #1e293b;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.75rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Clinical Pharmacotherapy Calculators</h1>
+  <p>Educational suite of dosing and pharmacokinetic calculators.</p>
+</header>
+
+<main>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2>Aminoglycoside EID Calculator</h2>
+      <p>Gentamicin, Tobramycin & Amikacin using Hartford Nomogram.</p>
+      <a class="button" href="aminoglycoside_extended_interval_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Digoxin Calculator</h2>
+      <p>Loading & maintenance dosing with renal adjustment.</p>
+      <a class="button" href="digoxin_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Doxorubicin Calculator</h2>
+      <p>BSA dosing, cumulative limit tracking & cardiac risk.</p>
+      <a class="button" href="doxorubicin_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Levofloxacin Calculator</h2>
+      <p>Dosing by indication, renal function and PK/PD targets.</p>
+      <a class="button" href="levofloxacin_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Meropenem Calculator</h2>
+      <p>Standard vs extended infusion + PK/PD modeling.</p>
+      <a class="button" href="meropenem_app.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Metformin Calculator</h2>
+      <p>eGFR-based dosing + GI titration suggestions.</p>
+      <a class="button" href="metformin_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Methotrexate Calculator</h2>
+      <p>Low-dose + high-dose oncology module & PK predictions.</p>
+      <a class="button" href="methotrexate_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Tetracycline Calculator</h2>
+      <p>Dosing for adults & pediatrics ≥8 years + PK estimation.</p>
+      <a class="button" href="tetracycline_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Vancomycin AUC Calculator</h2>
+      <p>AUC24, trough, LD/MD based on renal function and weight.</p>
+      <a class="button" href="vancomycin_auc_calculator.html">Open Calculator</a>
+    </div>
+
+    <div class="card">
+      <h2>Warfarin Calculator</h2>
+      <p>Weekly dose adjustments based on INR + PK logic.</p>
+      <a class="button" href="warfarin_calculator.html">Open Calculator</a>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  Clinical Calculators © Haitham | For educational use only.
+</footer>
+
+</body>
+</html>
