@@ -1,302 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Levofloxacin Adult & Pediatric Dosing Calculator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Levofloxacin Adult & Pediatric Dosing + PK Calculator</title>
 
 <style>
-/* ---------------- BASIC DESIGN SYSTEM (unchanged from original) --------------- */
-:root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  line-height: 1.4;
+:root{
+  --primary:#0b4f6c;
+  --danger:#c62828;
+  --light:#f5f6f8;
+  --border:#d6d6d6;
 }
-body { margin: 0; background:#f5f6f8; color:#222; }
-header { background:#0b4f6c; color:#fff; padding:1rem 1.5rem; }
-header h1 { margin:0; font-size:1.3rem; }
-main { max-width:1250px; margin:1.5rem auto; padding:0 1rem; }
-.card {
-  background:#fff; border-radius:10px; padding:1rem 1.1rem 1.2rem;
-  box-shadow:0 1px 4px rgba(0,0,0,0.08);
-}
-h2 { margin:0 0 0.5rem; font-size:1.05rem; color:#0b4f6c; }
-.field { display:flex; flex-direction:column; margin-bottom:0.6rem; }
-input, select, textarea {
-  padding:0.35rem 0.45rem; font-size:0.9rem; border-radius:4px;
-  border:1px solid #ccd1d9; width:100%; box-sizing:border-box;
-}
-button {
-  border-radius:4px; padding:0.45rem 0.9rem; font-size:0.9rem;
-  border:none; cursor:pointer; background:#0b4f6c; color:#fff;
-}
-button.secondary { background:#e0e3ea; color:#222; }
-
-/* ---------------- NEW PEDIATRIC DESIGN ------------------ */
-#pediatricCard {
-  display:none;
-  border-top:4px solid #c62828;
-}
-.ped-warning {
-  background:#fdecea;
-  border-left:4px solid #c62828;
-  padding:0.6rem 0.8rem;
-  margin-bottom:1rem;
-  color:#8a1c1c;
-  font-weight:600;
-}
-.disabled-panel {
-  display:none;
-  background:#f0f0f0;
-  padding:1rem;
-  border-radius:8px;
-  margin-top:0.5rem;
-  border:1px solid #ccc;
-  opacity:0.65;
-  pointer-events:none;
-}
-.show-btn {
-  margin-top:0.6rem;
-  background:#777;
-}
+body{margin:0;font-family:system-ui;background:var(--light)}
+header{background:var(--primary);color:#fff;padding:1rem 1.5rem;font-size:1.3rem}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;max-width:1400px;margin:1.5rem auto;padding:0 1rem}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.2rem;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.full-span{grid-column:1/-1}
+h2{margin:0 0 .8rem;color:var(--primary);font-size:1.1rem}
+.field{display:flex;flex-direction:column;margin-bottom:.7rem}
+label{font-size:.88rem;margin-bottom:.2rem}
+input,select,textarea{padding:.45rem;border-radius:6px;border:1px solid var(--border);font-size:.9rem}
+button{background:var(--primary);color:#fff;border:none;border-radius:6px;padding:.55rem 1rem;cursor:pointer}
+.danger{background:#fdecea;border-left:4px solid var(--danger);padding:.7rem 1rem;margin-bottom:1rem;color:var(--danger);font-weight:600}
+.warn{background:#fff3cd;border-left:4px solid #ff9800;padding:.6rem;margin-top:.6rem}
 </style>
 </head>
 
 <body>
-<header>
-  <h1>Levofloxacin Adult & Pediatric Dosing Calculator</h1>
-</header>
+<header>Levofloxacin Adult & Pediatric Dosing + PK Calculator</header>
 
-<main>
+<div class="grid">
 
-<!-- ======================= PATIENT GENERAL DATA ======================= -->
+<!-- PATIENT DATA -->
 <section class="card">
-  <h2>Patient Data</h2>
-
-  <div class="field">
-    <label>Age (years)</label>
-    <input type="number" id="age" min="1" max="120">
-  </div>
-
-  <div class="field">
-    <label>Sex</label>
-    <select id="sex">
-      <option value="">Select…</option>
-      <option value="M">Male</option>
-      <option value="F">Female</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Weight (kg)</label>
-    <input type="number" id="tbw" step="0.1">
-  </div>
-
-  <div class="field">
-    <label>Height (cm)</label>
-    <input type="number" id="height" step="0.5">
-  </div>
-
-  <div class="field">
-    <label>Serum Creatinine (mg/dL)</label>
-    <input type="number" id="scr" step="0.01">
-  </div>
-
+<h2>Patient Data</h2>
+<div class="field"><label>Age (years)</label><input id="age" type="number"></div>
+<div class="field"><label>Sex</label>
+<select id="sex">
+<option value="">Select</option>
+<option value="M">Male</option>
+<option value="F">Female</option>
+</select></div>
+<div class="field"><label>Weight (kg)</label><input id="tbw" type="number"></div>
+<div class="field"><label>Height (cm)</label><input id="height" type="number"></div>
+<div class="field"><label>Serum Creatinine (mg/dL)</label><input id="scr" step="0.01"></div>
 </section>
 
-<!-- ======================= PEDIATRIC MODULE (AGE <16) ======================= -->
-<section class="card" id="pediatricCard">
+<!-- PEDIATRIC -->
+<section id="pedCard" class="card full-span" style="display:none">
+<div class="danger">
+Levofloxacin is NOT recommended in patients &lt;16 years except for FDA-approved indications
+(inhalational anthrax, plague) or when no safer alternatives exist.
+</div>
 
-  <div class="ped-warning">
-    Levofloxacin is generally NOT recommended for patients under 16 years except for
-    FDA-approved indications (post-exposure inhalational anthrax or plague) or when
-    no safe alternatives exist.
-  </div>
+<div class="warn">
+<strong>Important:</strong> Renal function–based dose adjustment is NOT routinely recommended
+for pediatric levofloxacin use. Dosing is strictly weight-based.
+</div>
 
-  <h2>Pediatric Levofloxacin Dosing</h2>
+<h2>Pediatric Dosing</h2>
+<div class="field"><label>Indication</label>
+<select id="pedInd">
+<option value="">Select</option>
+<option value="anthrax">Inhalational Anthrax</option>
+<option value="plague">Plague</option>
+<option value="override">Override (No safer alternative)</option>
+</select></div>
 
-  <div class="field">
-    <label>Pediatric Indication</label>
-    <select id="pedInd">
-      <option value="">Select indication…</option>
-      <option value="anthrax">Post-exposure inhalational anthrax</option>
-      <option value="plague">Pneumonic / septicemic plague</option>
-      <option value="override">Clinician override – no safer alternative</option>
-    </select>
-  </div>
+<div class="field"><label>Override justification (required if override)</label>
+<textarea id="pedJust"></textarea></div>
 
-  <div class="field">
-    <label>Clinician justification (required for override)</label>
-    <textarea id="pedJustification"></textarea>
-  </div>
+<button id="calcPed">Calculate Pediatric Dose</button>
 
-  <div class="field">
-    <button id="pedCalcBtn">Calculate Pediatric Dose</button>
-  </div>
+<hr>
+<div><strong>Dose:</strong> <span id="pedDose">–</span></div>
+<div><strong>Interval:</strong> q12h</div>
+<div><strong>Duration:</strong> <span id="pedDur">–</span></div>
 
-  <hr>
-
-  <h2>Pediatric Output</h2>
-
-  <div class="field"><strong>Dose per administration:</strong> <span id="pedDoseOut">–</span></div>
-  <div class="field"><strong>Interval:</strong> <span id="pedIntOut">–</span></div>
-  <div class="field"><strong>Duration:</strong> <span id="pedDurOut">–</span></div>
-
-  <h3>PK Estimates</h3>
-  <div class="field"><strong>Vd:</strong> <span id="pedVdOut">–</span></div>
-  <div class="field"><strong>CL:</strong> <span id="pedClOut">–</span></div>
-  <div class="field"><strong>ke:</strong> <span id="pedKeOut">–</span></div>
-  <div class="field"><strong>t½:</strong> <span id="pedThalfOut">–</span></div>
-
-  <div class="field"><strong>Predicted Cmax:</strong> <span id="pedCmaxOut">–</span></div>
-  <div class="field"><strong>Predicted Cmin:</strong> <span id="pedCminOut">–</span></div>
-
-  <hr>
-
-  <h2>Summary</h2>
-  <pre id="pedSummaryText">Enter pediatric details and calculate.</pre>
-
-  <button class="show-btn" id="showAdultBtn">Show Adult Regimens (disabled)</button>
-  <div id="adultDisabledPanel" class="disabled-panel">
-    <h3>Adult Regimens (Reference Only – Disabled)</h3>
-    <p>Adult dosing is disabled because patient is under 16 years.</p>
-    <p>All adult indications and renal adjustments appear here for reference only.</p>
-  </div>
-
+<pre id="pedSummary">—</pre>
 </section>
 
-<!-- ======================= ADULT MODULE (STANDARD) ======================= -->
-<section id="adultMain" class="card">
-  <h2>Adult Dosing Module</h2>
-  <p>This entire module is hidden when age <16.</p>
-
-  <div class="field">
-    <label>Indication</label>
-    <select id="indication">
-      <option value="CAP_750">Community-acquired pneumonia (750 mg)</option>
-      <option value="CAP_500">Community-acquired pneumonia (500 mg)</option>
-      <option value="HAP">HAP/VAP</option>
-      <option value="UTI750">Complicated UTI (750 mg)</option>
-      <option value="UTI250">Complicated UTI (250 mg)</option>
-      <option value="OTH">Other</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <button id="adultCalcBtn">Calculate Adult Dose</button>
-  </div>
-
-  <div class="field"><strong>Adult Output:</strong> <span id="adultOut">–</span></div>
+<!-- ADULT A -->
+<section id="adultA" class="card">
+<h2>Adult Indication</h2>
+<select id="adultInd">
+<option value="cap500">CAP 500 mg</option>
+<option value="cap750">CAP 750 mg</option>
+<option value="hap">HAP/VAP 750 mg</option>
+<option value="abecb">ABECB 500 mg</option>
+<option value="sinus500">Sinusitis 500 mg</option>
+<option value="sinus750">Sinusitis 750 mg</option>
+<option value="cuti750">cUTI 750 mg</option>
+<option value="cuti250">cUTI 250 mg</option>
+<option value="apy750">Pyelonephritis 750 mg</option>
+<option value="apy250">Pyelonephritis 250 mg</option>
+<option value="uuti">Uncomplicated UTI 250 mg</option>
+<option value="prost">Prostatitis 500 mg</option>
+<option value="csssi">cSSSI 750 mg</option>
+<option value="usssi">uSSSI 500 mg</option>
+</select>
+<div class="field"><label>Custom Dose (mg)</label><input id="adultCustom"></div>
 </section>
 
-</main>
+<!-- ADULT B -->
+<section id="adultB" class="card">
+<h2>Renal Function (Adults Only)</h2>
+<div class="field">
+<label>Creatinine Clearance (mL/min)</label>
+<input id="crcl" readonly>
+<small>Automatically calculated (Cockcroft–Gault)</small>
+</div>
+</section>
+
+<!-- ADULT C -->
+<section id="adultC" class="card">
+<h2>Adult PK Output</h2>
+<button id="calcAdult">Calculate PK</button>
+<hr>
+<div>Vd: <span id="aVd">–</span></div>
+<div>CL: <span id="aCl">–</span></div>
+<div>ke: <span id="aKe">–</span></div>
+<div>t½: <span id="aT">–</span></div>
+<div>AF: <span id="aAF">–</span></div>
+<div>Cmax: <span id="aCmax">–</span></div>
+<div>Cmin: <span id="aCmin">–</span></div>
+<div>AUC24: <span id="aAUC">–</span></div>
+<div>Expected AUC: <span id="aExp">–</span></div>
+<div id="adultWarn"></div>
+</section>
+
+</div>
 
 <script>
-/* =================== Utility =================== */
-function round25(x) {
-  if (!x) return 0;
-  return Math.round(x / 25) * 25;
+/* MODE SWITCH */
+age.addEventListener('input',()=>{
+  const isPed = +age.value < 16;
+  pedCard.style.display = isPed ? 'block' : 'none';
+  adultA.style.display = adultB.style.display = adultC.style.display = isPed ? 'none' : 'block';
+});
+
+/* ADULT CrCl – Cockcroft–Gault ONLY */
+function calcCrCl(){
+  if(+age.value < 16){ crcl.value=''; return; }
+  const wt=+tbw.value, scrV=+scr.value, sx=sex.value;
+  if(!wt||!scrV||!sx) return;
+  let cr=((140-+age.value)*wt)/(72*scrV);
+  if(sx==='F') cr*=0.85;
+  crcl.value=cr.toFixed(1);
 }
+['age','tbw','scr','sex'].forEach(i=>document.getElementById(i).addEventListener('input',calcCrCl));
 
-/* =================== Mode Switcher =================== */
-const ageInput = document.getElementById("age");
-ageInput.addEventListener("input", () => {
-  const age = parseFloat(ageInput.value);
+/* PEDIATRIC */
+calcPed.onclick=()=>{
+  if(+age.value>=16) return;
+  const wt=+tbw.value;
+  if(!wt) return alert('Weight required');
+  if(pedInd.value==='override' && pedJust.value.trim().length<5)
+    return alert('Justification required');
+  const dose=Math.min(250,Math.round((8*wt)/25)*25);
+  pedDose.textContent=dose+' mg';
+  pedDur.textContent=pedInd.value==='anthrax'?'60 days':'10–14 days';
+  pedSummary.textContent=`Dose: ${dose} mg q12h\nRenal adjustment: Not required`;
+};
 
-  if (age < 16) {
-    document.getElementById("adultMain").style.display = "none";
-    document.getElementById("pediatricCard").style.display = "block";
-  } else {
-    document.getElementById("adultMain").style.display = "block";
-    document.getElementById("pediatricCard").style.display = "none";
-  }
-});
-
-/* =================== Adult Reference Collapsible Panel =================== */
-document.getElementById("showAdultBtn").addEventListener("click", () => {
-  const panel = document.getElementById("adultDisabledPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
-});
-
-/* =================== Pediatric Calculation =================== */
-document.getElementById("pedCalcBtn").addEventListener("click", () => {
-
-  const w = parseFloat(document.getElementById("tbw").value);
-  const pedInd = document.getElementById("pedInd").value;
-  const justification = document.getElementById("pedJustification").value.trim();
-  
-  if (!w || w <= 0) {
-    alert("Enter child weight.");
-    return;
-  }
-  if (!pedInd) {
-    alert("Select pediatric indication.");
-    return;
-  }
-  if (pedInd === "override" && justification.length < 5) {
-    alert("Clinician justification required for override.");
-    return;
-  }
-
-  // Dose = 8 mg/kg, max 250 mg, then round to nearest 25 mg
-  const rawDose = Math.min(8 * w, 250);
-  const dose = round25(rawDose);
-
-  // Duration
-  let duration = "";
-  if (pedInd === "anthrax") duration = "60 days";
-  else if (pedInd === "plague") duration = "10–14 days";
-  else duration = "Varies – override mode";
-
-  // PK estimates (simple model: Vd=1.1 L/kg)
-  const vd = 1.1 * w;
-  const cl = (w * 0.06) + 1;
-  const ke = cl / vd;
-  const thalf = 0.693 / ke;
-
-  const infusionH = 1;
-  const R = dose / infusionH;
-  const cmax = (R / (ke * vd)) * (1 - Math.exp(-ke * infusionH));
-  const interval = 12;
-  const cmin = cmax * Math.exp(-ke * (interval - infusionH));
-
-  // Output
-  document.getElementById("pedDoseOut").textContent = `${dose} mg (rounded to nearest 25 mg)`;
-  document.getElementById("pedIntOut").textContent = "Every 12 hours (q12h)";
-  document.getElementById("pedDurOut").textContent = duration;
-
-  document.getElementById("pedVdOut").textContent = `${vd.toFixed(1)} L`;
-  document.getElementById("pedClOut").textContent = `${cl.toFixed(2)} L/h`;
-  document.getElementById("pedKeOut").textContent = `${ke.toFixed(3)} h⁻¹`;
-  document.getElementById("pedThalfOut").textContent = `${thalf.toFixed(1)} h`;
-
-  document.getElementById("pedCmaxOut").textContent = `${cmax.toFixed(1)} mg/L`;
-  document.getElementById("pedCminOut").textContent = `${cmin.toFixed(2)} mg/L`;
-
-  // Summary
-  const summary = [];
-  summary.push("Pediatric Levofloxacin Dosing Summary");
-  summary.push("--------------------------------------------");
-  summary.push(`Indication: ${pedInd}`);
-  summary.push(`Weight: ${w} kg`);
-  summary.push(`Dose: ${dose} mg q12h`);
-  summary.push(`Duration: ${duration}`);
-  if (pedInd === "override") {
-    summary.push("");
-    summary.push("OVERRIDE JUSTIFICATION:");
-    summary.push(justification);
-  }
-  summary.push("");
-  summary.push("Safety Note:");
-  summary.push("Fluoroquinolones carry risk of musculoskeletal toxicity in children. Use only when benefits outweigh risks.");
-  
-  document.getElementById("pedSummaryText").textContent = summary.join("\n");
-});
-
-/* =================== Adult Logic Placeholder =================== */
-document.getElementById("adultCalcBtn").addEventListener("click", () => {
-  document.getElementById("adultOut").textContent =
-    "Adult calculation placeholder (still active for age ≥16).";
-});
+/* ADULT PK */
+calcAdult.onclick=()=>{
+  if(+age.value<16) return;
+  const wt=+tbw.value, cr=+crcl.value;
+  if(!wt||!cr) return alert('Missing data');
+  const map={cap500:500,cap750:750,hap:750,abecb:500,sinus500:500,sinus750:750,
+             cuti750:750,cuti250:250,apy750:750,apy250:250,uuti:250,prost:500,
+             csssi:750,usssi:500};
+  const dose=+adultCustom.value||map[adultInd.value];
+  const vd=1.1*wt, cl=0.065*cr+0.284, ke=cl/vd;
+  aVd.textContent=vd.toFixed(1)+' L';
+  aCl.textContent=cl.toFixed(2)+' L/h';
+  aKe.textContent=ke.toFixed(3);
+  aT.textContent=(0.693/ke).toFixed(1)+' h';
+  aAF.textContent=(1/(1-Math.exp(-ke*24))).toFixed(2);
+  const cmax=(dose/(ke*vd))*(1-Math.exp(-ke));
+  aCmax.textContent=cmax.toFixed(1);
+  aCmin.textContent=(cmax*Math.exp(-ke*23)).toFixed(2);
+  const auc=dose/cl;
+  aAUC.textContent=auc.toFixed(1);
+  aExp.textContent=dose===500?'50–70':dose===750?'90–120':'—';
+};
 </script>
 
 </body>
